@@ -7,9 +7,9 @@
 import React, { Component } from 'react'
 import { AppRegistry, StyleSheet, Text, View } from 'react-native'
 
-var noble = require('noble')
-var bleat = require('./libs/bleat/index').classic
-var ergometer = require('./libs/ergometer.js').ergometer(bleat)
+const noble = require('noble')
+const bleat = require('./libs/bleat/index').classic
+const ergometer = require('./libs/ergometer.js').ergometer(bleat)
 
 class ErgometerReactNative extends Component {
   performanceMonitor = new ergometer.PerformanceMonitor()
@@ -23,7 +23,7 @@ class ErgometerReactNative extends Component {
 
   onConnectionStateChanged(oldState, newState) {
     this.setState({ connectionState: newState })
-    var self = this
+    const self = this
     //do a csafe call when we are ready for communication
     if (newState === 6) {
       //ready for communication

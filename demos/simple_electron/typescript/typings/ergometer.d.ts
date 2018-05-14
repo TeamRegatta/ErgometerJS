@@ -6,7 +6,7 @@
  *
  *
  */
-declare module ergometer.utils {
+declare namespace ergometer.utils {
     /**
      * @return {Object}
      */
@@ -19,33 +19,28 @@ declare module ergometer.utils {
      *
      * @example
      *
-     * var queue = new Queue(1);
+     * const queue = new Queue(1);
      *
      * queue.add(function () {
-       *     // resolve of this promise will resume next request
-       *     return downloadTarballFromGithub(url, file);
-       * })
+     *     // resolve of this promise will resume next request
+     *     return downloadTarballFromGithub(url, file);
+     * })
      * .then(function (file) {
-       *     doStuffWith(file);
-       * });
+     *     doStuffWith(file);
+     * });
      *
      * queue.add(function () {
-       *     return downloadTarballFromGithub(url, file);
-       * })
+     *     return downloadTarballFromGithub(url, file);
+     * })
      * // This request will be paused
      * .then(function (file) {
-       *     doStuffWith(file);
-       * });
+     *     doStuffWith(file);
+     * });
      */
     interface IPromiseFunction {
         (...args: any[]): Promise<any | void>;
     }
     class FunctionQueue {
-        /**
-         * @param {*} value
-         * @returns {LocalPromise}
-         */
-        private resolveWith(value);
         private maxPendingPromises;
         private maxQueuedPromises;
         private pendingPromises;
@@ -70,6 +65,11 @@ declare module ergometer.utils {
          * @return {number}
          */
         getQueueLength(): number;
+        /**
+         * @param {*} value
+         * @returns {LocalPromise}
+         */
+        private resolveWith(value);
         /**
          * @returns {boolean} true if first item removed from queue
          * @private
@@ -122,21 +122,21 @@ declare namespace ergometer.pubSub {
     class Event<T extends ISubscription> {
         protected _subscribed: ISubscriptionItem[];
         protected _subScriptionChangedEvent: ISubscriptionChanged;
-        protected doChangedEvent(): void;
-        protected findSubscription(event: T): ISubscriptionItem;
         sub(applyObject: any, event: T): void;
         unsub(event: T): void;
-        protected doPub(args: any[]): void;
         readonly pub: T;
         readonly pubAsync: T;
         readonly count: number;
         registerChangedEvent(func: ISubscriptionChanged): void;
+        protected doChangedEvent(): void;
+        protected findSubscription(event: T): ISubscriptionItem;
+        protected doPub(args: any[]): void;
     }
 }
 /**
  * Created by tijmen on 01-02-16.
  */
-declare module ergometer.ble {
+declare namespace ergometer.ble {
     interface IDevice {
         address: string;
         name: string;
@@ -160,11 +160,10 @@ declare module ergometer.ble {
 /**
  * Created by tijmen on 01-02-16.
  */
-declare module ergometer.ble {
+declare namespace ergometer.ble {
     class DriverBleat implements IDriver {
-        private _device;
         performanceMonitor: PerformanceMonitor;
-        private getCharacteristic(serviceUid, characteristicUid);
+        private _device;
         connect(device: IDevice, disconnectFn: () => void): Promise<void>;
         disconnect(): void;
         startScan(foundFn?: IFoundFunc): Promise<void>;
@@ -173,6 +172,7 @@ declare module ergometer.ble {
         readCharacteristic(serviceUIID: string, characteristicUUID: string): Promise<ArrayBuffer>;
         enableNotification(serviceUIID: string, characteristicUUID: string, receive: (data: ArrayBuffer) => void): Promise<void>;
         disableNotification(serviceUIID: string, characteristicUUID: string): Promise<void>;
+        private getCharacteristic(serviceUid, characteristicUid);
     }
 }
 /**
@@ -185,7 +185,7 @@ declare module ergometer.ble {
  * It assumes that there simple ble is already imported as a var named simpleBLE
  *
  */
-declare module ergometer.ble {
+declare namespace ergometer.ble {
     class DriverSimpleBLE implements IDriver {
         performanceMonitor: PerformanceMonitor;
         connect(device: IDevice, disconnectFn: () => void): Promise<void>;
@@ -204,7 +204,7 @@ declare module ergometer.ble {
 /**
  * Created by tijmen on 01-02-16.
  */
-declare module ergometer.ble {
+declare namespace ergometer.ble {
     function hasWebBlueTooth(): boolean;
     class DriverWebBlueTooth implements IDriver {
         private _device;
@@ -214,24 +214,24 @@ declare module ergometer.ble {
         private _listerCharacteristicMap;
         private _performanceMonitor;
         constructor(performanceMonitor: PerformanceMonitor);
-        private getCharacteristic(serviceUid, characteristicUid);
-        private onDisconnected(event);
-        private clearConnectionVars();
         connect(device: IDevice, disconnectFn: () => void): Promise<void>;
         disconnect(): void;
         startScan(foundFn?: IFoundFunc): Promise<void>;
         stopScan(): Promise<void>;
         writeCharacteristic(serviceUIID: string, characteristicUUID: string, data: ArrayBufferView): Promise<void>;
         readCharacteristic(serviceUIID: string, characteristicUUID: string): Promise<ArrayBuffer>;
-        private onCharacteristicValueChanged(event);
         enableNotification(serviceUIID: string, characteristicUUID: string, receive: (data: ArrayBuffer) => void): Promise<void>;
         disableNotification(serviceUIID: string, characteristicUUID: string): Promise<void>;
+        private getCharacteristic(serviceUid, characteristicUid);
+        private onDisconnected(event);
+        private clearConnectionVars();
+        private onCharacteristicValueChanged(event);
     }
 }
 /**
  * Created by tijmen on 16-02-16.
  */
-declare module ergometer.ble {
+declare namespace ergometer.ble {
     interface IRecordDevice {
         address: string;
         name: string;
@@ -263,19 +263,15 @@ declare module ergometer.ble {
         error?: any;
     }
     class RecordingDriver implements IDriver {
+        _performanceMonitor: PerformanceMonitor;
         private _realDriver;
         private _startTime;
         private _events;
-        _performanceMonitor: PerformanceMonitor;
         constructor(performanceMonitor: PerformanceMonitor, realDriver: IDriver);
-        protected getRelativeTime(): number;
         addRecording(eventType: RecordingEventType, data?: IRecordCharacteristic | IRecordDevice): IRecordingItem;
-        readonly events: ergometer.ble.IRecordingItem[];
+        events: ergometer.ble.IRecordingItem[];
         clear(): void;
         startRecording(): void;
-        protected recordResolveFunc(resolve: () => void, rec: IRecordingItem): () => void;
-        protected recordResolveBufferFunc(resolve: (data: ArrayBuffer) => void, rec: IRecordingItem): (data: ArrayBuffer) => void;
-        protected recordErrorFunc(reject: (e) => void, rec: IRecordingItem): (e) => void;
         startScan(foundFn?: IFoundFunc): Promise<void>;
         stopScan(): void;
         connect(device: IDevice, disconnectFn: () => void): Promise<void>;
@@ -284,12 +280,16 @@ declare module ergometer.ble {
         readCharacteristic(serviceUIID: string, characteristicUUID: string): Promise<ArrayBuffer>;
         enableNotification(serviceUIID: string, characteristicUUID: string, receive: (data: ArrayBuffer) => void): Promise<void>;
         disableNotification(serviceUIID: string, characteristicUUID: string): Promise<void>;
+        protected getRelativeTime(): number;
+        protected recordResolveFunc(resolve: () => void, rec: IRecordingItem): () => void;
+        protected recordResolveBufferFunc(resolve: (data: ArrayBuffer) => void, rec: IRecordingItem): (data: ArrayBuffer) => void;
+        protected recordErrorFunc(reject: (e) => void, rec: IRecordingItem): (e) => void;
     }
 }
 /**
  * Created by tijmen on 18-02-16.
  */
-declare module ergometer.ble {
+declare namespace ergometer.ble {
     interface CallBackEvent extends IRecordingItem {
         resolve?: (e?: any) => void;
         reject?: (e: any) => void;
@@ -304,18 +304,8 @@ declare module ergometer.ble {
         private _startTime;
         private _checkQueueTimerId;
         private _performanceMonitor;
-        protected getRelativeTime(): number;
         constructor(performanceMonitor: PerformanceMonitor, realDriver: IDriver);
         readonly events: ergometer.ble.IRecordingItem[];
-        protected isCallBack(eventType: RecordingEventType): boolean;
-        protected isSameEvent(event1: IRecordingItem, event2: IRecordingItem): boolean;
-        protected runEvent(event: IRecordingItem, queuedEvent: CallBackEvent): void;
-        protected runTimedEvent(event: IRecordingItem, queuedEvent: CallBackEvent): void;
-        protected removeEvent(i: number): void;
-        protected checkQueue(): void;
-        protected checkAllEventsProcessd(): boolean;
-        protected timeNextCheck(timeStamp?: number): void;
-        protected addEvent(eventType: RecordingEventType, isMethod: boolean, resolve?: (e?: any) => void, reject?: (e: any) => void, serviceUIID?: string, characteristicUUID?: string): void;
         replay(events: IRecordingItem[]): void;
         playing: boolean;
         startScan(foundFn?: IFoundFunc): Promise<void>;
@@ -326,6 +316,16 @@ declare module ergometer.ble {
         readCharacteristic(serviceUIID: string, characteristicUUID: string): Promise<ArrayBuffer>;
         enableNotification(serviceUIID: string, characteristicUUID: string, receive: (data: ArrayBuffer) => void): Promise<void>;
         disableNotification(serviceUIID: string, characteristicUUID: string): Promise<void>;
+        protected getRelativeTime(): number;
+        protected isCallBack(eventType: RecordingEventType): boolean;
+        protected isSameEvent(event1: IRecordingItem, event2: IRecordingItem): boolean;
+        protected runEvent(event: IRecordingItem, queuedEvent: CallBackEvent): void;
+        protected runTimedEvent(event: IRecordingItem, queuedEvent: CallBackEvent): void;
+        protected removeEvent(i: number): void;
+        protected checkQueue(): void;
+        protected checkAllEventsProcessd(): boolean;
+        protected timeNextCheck(timeStamp?: number): void;
+        protected addEvent(eventType: RecordingEventType, isMethod: boolean, resolve?: (e?: any) => void, reject?: (e: any) => void, serviceUIID?: string, characteristicUUID?: string): void;
     }
 }
 /**
@@ -333,7 +333,7 @@ declare module ergometer.ble {
  *
  * translation of concept 2 csafe.h to typescript version  9/16/08 10:51a
  */
-declare module ergometer.csafe.defs {
+declare namespace ergometer.csafe.defs {
     const EXT_FRAME_START_BYTE = 240;
     const FRAME_START_BYTE = 241;
     const FRAME_END_BYTE = 242;
@@ -800,7 +800,7 @@ declare module ergometer.csafe.defs {
  * this is the core, you do not have to change this code.
  *
  */
-declare module ergometer.csafe {
+declare namespace ergometer.csafe {
     interface ICommandParamsBase {
         onError?: ErrorHandler;
         onDataReceived?: (data: any) => void;
@@ -828,7 +828,7 @@ declare module ergometer.csafe {
         register(createCommand: ICommand): void;
         apply(buffer: IBuffer, monitor: PerformanceMonitor): void;
     }
-    var commandManager: CommandManagager;
+    let commandManager: CommandManagager;
     interface ICommandSetStandardValue extends ICommandParamsBase {
         value: number;
     }
@@ -842,7 +842,7 @@ declare module ergometer.csafe {
  * Extensible frame work so you can add your own csafe commands to the buffer
  *
  */
-declare module ergometer.csafe {
+declare namespace ergometer.csafe {
     interface ICommandStrokeState extends ICommandParamsBase {
         onDataReceived: (state: StrokeState) => void;
     }
@@ -906,7 +906,7 @@ declare module ergometer.csafe {
  * Extensible frame work so you can add your own csafe commands to the buffer
  *
  */
-declare module ergometer.csafe {
+declare namespace ergometer.csafe {
     interface IVersion {
         ManufacturerId: number;
         CID: number;
@@ -934,7 +934,7 @@ declare module ergometer.csafe {
 /**
  * Created by tijmen on 06-02-16.
  */
-declare module ergometer.csafe {
+declare namespace ergometer.csafe {
     interface ICommandSetWorkOutType extends ICommandParamsBase {
         value: WorkoutType;
     }
@@ -945,7 +945,7 @@ declare module ergometer.csafe {
 /**
  * Created by tijmen on 28-12-15.
  */
-declare module ergometer {
+declare namespace ergometer {
     const enum RowingSampleRate {
         rate1sec = 0,
         rate500ms = 1,
@@ -1251,7 +1251,7 @@ declare module ergometer {
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-declare module ergometer {
+declare namespace ergometer {
     interface RowingGeneralStatusEvent extends pubSub.ISubscription {
         (data: RowingGeneralStatus): void;
     }
@@ -1397,12 +1397,18 @@ declare module ergometer {
         private _waitResponseCommands;
         private _generalStatusEventAttachedByPowerCurve;
         private _recording;
+        /**
+         * To work with this class you will need to create it.
+         */
+        constructor(opts?: {
+            driver?: ble.IDriver;
+        });
         protected readonly recordingDriver: ergometer.ble.RecordingDriver;
         recording: boolean;
         readonly replayDriver: ble.ReplayDriver;
         replaying: boolean;
         replay(events: ble.IRecordingItem[]): void;
-        readonly recordingEvents: ble.IRecordingItem[];
+        recordingEvents: ble.IRecordingItem[];
         protected readonly driver: ergometer.ble.IDriver;
         /**
          * By default it the logEvent will return errors if you want more debug change the log level
@@ -1604,35 +1610,6 @@ declare module ergometer {
          */
         readonly connectionState: MonitorConnectionState;
         /**
-         *
-         * @param value
-         */
-        protected changeConnectionState(value: MonitorConnectionState): void;
-        /**
-         * To work with this class you will need to create it.
-         */
-        constructor();
-        /**
-         *
-         */
-        protected enableMultiplexNotification(): void;
-        /**
-         *
-         */
-        protected disableMultiPlexNotification(): void;
-        /**
-         *
-         */
-        protected enableDisableNotification(): void;
-        protected onPowerCurveRowingGeneralStatus(data: ergometer.RowingGeneralStatus): void;
-        /**
-         *
-         */
-        protected initialize(): void;
-        /**
-         * When low level initialization complete, this function is called.
-         */
-        /**
          * Print debug info to console and application UI.
          * @param info
          */
@@ -1660,22 +1637,6 @@ declare module ergometer {
         getErrorHandlerFunc(errorDescription: string, errorFn?: ErrorHandler): ErrorHandler;
         /**
          *
-         * @param device
-         */
-        protected removeDevice(device: DeviceInfo): void;
-        /**
-         *
-         * @param device
-         */
-        protected addDevice(device: DeviceInfo): void;
-        /**
-         *
-         * @param name
-         * @returns {DeviceInfo}
-         */
-        protected findDevice(name: string): DeviceInfo;
-        /**
-         *
          */
         stopScan(): void;
         /**
@@ -1689,6 +1650,58 @@ declare module ergometer {
          * @param deviceName
          */
         connectToDevice(deviceName: string): Promise<void>;
+        /****************************************************************************************
+         *                               csafe
+         *****************************************************************************************  */
+        /**
+         *  send everyt thing which is put into the csave buffer
+         *
+         * @param success
+         * @param error
+         * @returns {Promise<void>|Promise} use promis instead of success and error function
+         */
+        sendCSafeBuffer(): Promise<void>;
+        receivedCSaveCommand(parsed: ParsedCSafeCommand): void;
+        handleCSafeNotifications(): void;
+        readonly csafeBuffer: ergometer.csafe.IBuffer;
+        /**
+         *
+         * @param device
+         */
+        protected removeDevice(device: DeviceInfo): void;
+        /**
+         *
+         * @param device
+         */
+        protected addDevice(device: DeviceInfo): void;
+        /**
+         *
+         * @param value
+         */
+        protected changeConnectionState(value: MonitorConnectionState): void;
+        /**
+         *
+         */
+        protected enableMultiplexNotification(): void;
+        /**
+         *
+         */
+        protected disableMultiPlexNotification(): void;
+        /**
+         *
+         */
+        protected enableDisableNotification(): void;
+        protected onPowerCurveRowingGeneralStatus(data: ergometer.RowingGeneralStatus): void;
+        /**
+         *
+         */
+        protected initialize(driver: ble.IDriver): void;
+        /**
+         *
+         * @param name
+         * @returns {DeviceInfo}
+         */
+        protected findDevice(name: string): DeviceInfo;
         /**
          * the promise is never fail
          * @param serviceUUID
@@ -1774,17 +1787,6 @@ declare module ergometer {
          */
         protected handleDataCallback(data: ArrayBuffer, func: (data: DataView) => void): void;
         protected removeOldSendCommands(): void;
-        /**
-         *  send everyt thing which is put into the csave buffer
-         *
-         * @param success
-         * @param error
-         * @returns {Promise<void>|Promise} use promis instead of success and error function
-         */
-        sendCSafeBuffer(): Promise<void>;
         protected sendCsafeCommands(byteArray: number[]): Promise<void>;
-        receivedCSaveCommand(parsed: ParsedCSafeCommand): void;
-        handleCSafeNotifications(): void;
-        readonly csafeBuffer: ergometer.csafe.IBuffer;
     }
 }
