@@ -1,0 +1,8 @@
+{
+  "editor.formatOnSave": true,
+  "javascript.validate.enable": true,
+
+  "tslint.enable": true,
+  "tslint.autoFixOnSave": true,
+  "typescript.validate.enable": true
+}
