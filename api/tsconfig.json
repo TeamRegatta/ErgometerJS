@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "strictNullChecks": false,
     "module": "system",
     "target": "es5",
     "sourceMap": true,
@@ -7,16 +8,12 @@
     "outDir": "lib",
     "declaration": true,
     "stripInternal": true,
-    "lib": [
-      "ES5",
-      "ES2015",
-      "DOM"]
-
+    "lib": ["es5", "es2015", "dom"]
   },
   "files": [
     "typescript/typings/bleat.classic.d.ts",
-    "typescript/typings/webbluetooth.d.ts",
     "typescript/typings/simpleBLE.d.ts",
+    "typescript/typings/webbluetooth.d.ts",
     "typescript/ergometer/utils.ts",
     "typescript/ergometer/functionQueue.ts",
     "typescript/ergometer/pubsub.ts",
@@ -34,6 +31,5 @@
     "typescript/ergometer/csafe/push_config_commands.ts",
     "typescript/ergometer/typedefinitions.ts",
     "typescript/ergometer/performancemonitor.ts"
-
   ]
 }

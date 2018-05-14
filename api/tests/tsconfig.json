@@ -6,18 +6,11 @@
     "outFile": "tests.js",
     "declaration": true,
     "stripInternal": true,
-    "noResolve":true,
-    "lib": [
-      "es5",
-      "es2015"
-    ]
-
+    "noResolve": true,
+    "lib": ["es5", "es2015"]
   },
-  "exclude": [
-    "node_modules"
-  ],
-  "filesGlob": [
-  ],
+  "exclude": ["node_modules"],
+  "filesGlob": [],
   "files": [
     "../typescript/typings/es6-promise.d.ts",
     "../typescript/typings/bleat.d.ts",
