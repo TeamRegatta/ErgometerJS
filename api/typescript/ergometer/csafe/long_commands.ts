@@ -1,190 +1,226 @@
-
 /**
  * Created by tijmen on 19-01-16.
  *
  * Extensible frame work so you can add your own csafe commands to the buffer
  *
  */
-module ergometer.csafe {
+namespace ergometer.csafe {
+  // ----------------------------- get the stoke state ------------------------------------
 
+  export interface ICommandStrokeState extends ICommandParamsBase {
+    onDataReceived: (state: StrokeState) => void
+  }
+  export interface IBuffer {
+    getStrokeState(params: ICommandStrokeState): IBuffer
+  }
 
-    //----------------------------- get the stoke state ------------------------------------
-
-    export interface ICommandStrokeState  extends ICommandParamsBase {
-        onDataReceived : (state : StrokeState )=>void;
+  commandManager.register((buffer: IBuffer, monitor: PerformanceMonitor) => {
+    buffer.getStrokeState = function(params: ICommandStrokeState): IBuffer {
+      buffer.addRawCommand({
+        waitForResponse: true,
+        command: csafe.defs.LONG_CFG_CMDS.SETUSERCFG1_CMD,
+        detailCommand: csafe.defs.PM_SHORT_PULL_DATA_CMDS.PM_GET_STROKESTATE,
+        onDataReceived: (data: DataView) => {
+          if (params.onDataReceived) params.onDataReceived(data.getUint8(0))
+        },
+        onError: params.onError
+      })
+      return buffer
     }
-    export interface IBuffer {
-        getStrokeState(params : ICommandStrokeState) : IBuffer;
-    }
+  })
 
-    commandManager.register( (buffer : IBuffer,monitor : PerformanceMonitor) =>{
-        buffer.getStrokeState= function (params : ICommandStrokeState) : IBuffer {
-            buffer.addRawCommand({
-                waitForResponse:true,
-                command : csafe.defs.LONG_CFG_CMDS.SETUSERCFG1_CMD,
-                detailCommand: csafe.defs.PM_SHORT_PULL_DATA_CMDS.PM_GET_STROKESTATE,
-                onDataReceived : (data : DataView)=>{
-                    if (params.onDataReceived) params.onDataReceived(data.getUint8(0))
-                },
-                onError:params.onError
-            });
-            return buffer;
-        }
-    })
+  // ----------------------------- get power curve ------------------------------------
 
-    //----------------------------- get power curve ------------------------------------
+  export interface ICommandPowerCurve {
+    onDataReceived: (curve: number[]) => void
+    onError?: ErrorHandler
+  }
+  export interface IBuffer {
+    getPowerCurve(params: ICommandPowerCurve): IBuffer
+  }
 
-    export interface ICommandPowerCurve  {
-        onDataReceived : (curve : number[] )=>void;
-        onError? : ErrorHandler;
-    }
-    export interface IBuffer {
-        getPowerCurve(params : ICommandPowerCurve) : IBuffer;
-    }
+  commandManager.register((buffer: IBuffer, monitor: PerformanceMonitor) => {
+    let receivePowerCurvePart: number[] = []
+    let currentPowerCurve: number[] = []
+    buffer.getPowerCurve = function(params: ICommandPowerCurve): IBuffer {
+      buffer.addRawCommand({
+        waitForResponse: true,
+        command: csafe.defs.LONG_CFG_CMDS.SETUSERCFG1_CMD,
+        detailCommand: csafe.defs.PM_LONG_PULL_DATA_CMDS.PM_GET_FORCEPLOTDATA,
+        data: [20],
+        onError: params.onError,
+        onDataReceived: (data: DataView) => {
+          if (params.onDataReceived) {
+            let bytesReturned = data.getUint8(0) // first byte
+            monitor.traceInfo(`received power curve count ${bytesReturned}`)
+            if (bytesReturned > 0) {
+              for (let i = 1; i < bytesReturned + 1; i += 2) {
+                let value = data.getUint16(i, true) // in ltile endian format
 
-    commandManager.register( (buffer : IBuffer,monitor : PerformanceMonitor) =>{
-        var  receivePowerCurvePart : number[] = [];
-        var  currentPowerCurve : number[]= [];
-        buffer.getPowerCurve= function (params : ICommandPowerCurve) : IBuffer {
+                receivePowerCurvePart.push(value)
+              }
+              monitor.traceInfo(
+                'received part :' + JSON.stringify(receivePowerCurvePart)
+              )
 
-            buffer.addRawCommand({
-                waitForResponse: true,
-                command : csafe.defs.LONG_CFG_CMDS.SETUSERCFG1_CMD,
-                detailCommand: csafe.defs.PM_LONG_PULL_DATA_CMDS.PM_GET_FORCEPLOTDATA,
-                data: [20],
-                onError:params.onError,
-                onDataReceived : (data : DataView)=>{
-                    if (params.onDataReceived)  {
-
-                        var bytesReturned = data.getUint8(0); //first byte
-                        monitor.traceInfo(`received power curve count ${bytesReturned}`);
-                        if (bytesReturned>0) {
-                            for (var i = 1; i < bytesReturned+1; i += 2) {
-                                var value=data.getUint16(i,true); //in ltile endian format
-
-                                receivePowerCurvePart.push(value);
-                            }
-                            monitor.traceInfo("received part :"+JSON.stringify(receivePowerCurvePart));
-
-                            //try to get another one till it is empty and there is nothing more
-                            buffer.clear().getPowerCurve({onDataReceived:params.onDataReceived}).send();
-                        }
-                        else {
-                            if (receivePowerCurvePart.length>0) {
-                                currentPowerCurve=receivePowerCurvePart;
-                                receivePowerCurvePart=[];
-                                monitor.traceInfo("Curve:"+JSON.stringify(currentPowerCurve));
-                                if (params.onDataReceived && currentPowerCurve.length>0)
-                                    params.onDataReceived(currentPowerCurve);
-                            }
-                        }
-                    }
+              // try to get another one till it is empty and there is nothing more
+              buffer
+                .clear()
+                .getPowerCurve({ onDataReceived: params.onDataReceived })
+                .send()
+            } else {
+              if (receivePowerCurvePart.length > 0) {
+                currentPowerCurve = receivePowerCurvePart
+                receivePowerCurvePart = []
+                monitor.traceInfo('Curve:' + JSON.stringify(currentPowerCurve))
+                if (params.onDataReceived && currentPowerCurve.length > 0) {
+                  params.onDataReceived(currentPowerCurve)
                 }
-            });
-            return buffer;
+              }
+            }
+          }
         }
-    });
-
-    //set program
-    export interface ICommandProgramParams extends ICommandParamsBase {
-        value : Program
+      })
+      return buffer
     }
-    export interface IBuffer {
-        setProgram(params : ICommandProgramParams) : IBuffer;
+  })
+
+  // set program
+  export interface ICommandProgramParams extends ICommandParamsBase {
+    value: Program
+  }
+  export interface IBuffer {
+    setProgram(params: ICommandProgramParams): IBuffer
+  }
+
+  registerStandardSet<ICommandProgramParams>(
+    'setProgram',
+    csafe.defs.LONG_DATA_CMDS.SETPROGRAM_CMD,
+    params => {
+      return [utils.getByte(params.value, 0), 0]
     }
+  )
 
-    registerStandardSet<ICommandProgramParams>("setProgram",
-        csafe.defs.LONG_DATA_CMDS.SETPROGRAM_CMD,
-        (params)=>{return [utils.getByte(params.value,0),0];});
+  // ----------------------------- set time ------------------------------------
 
-    //----------------------------- set time ------------------------------------
+  export interface ICommandTimeParams extends ICommandParamsBase {
+    hour: number
+    minute: number
+    second: number
+  }
+  export interface IBuffer {
+    setTime(params: ICommandTimeParams): IBuffer
+  }
 
-    export interface ICommandTimeParams extends ICommandParamsBase {
-        hour : number;
-        minute: number;
-        second : number;
+  registerStandardSet<ICommandTimeParams>(
+    'setTime',
+    csafe.defs.LONG_CFG_CMDS.SETTIME_CMD,
+    params => {
+      return [params.hour, params.minute, params.second]
     }
-    export interface IBuffer {
-        setTime(params : ICommandTimeParams) : IBuffer;
+  )
+
+  // ----------------------------- set date ------------------------------------
+
+  export interface ICommandDateParams extends ICommandParamsBase {
+    year: number
+    month: number
+    day: number
+  }
+  export interface IBuffer {
+    setDate(params: ICommandDateParams): IBuffer
+  }
+
+  registerStandardSet<ICommandDateParams>(
+    'setDate',
+    csafe.defs.LONG_CFG_CMDS.SETDATE_CMD,
+    params => {
+      return [utils.getByte(params.year, 0), params.month, params.day]
     }
+  )
 
-    registerStandardSet<ICommandTimeParams>("setTime",
-        csafe.defs.LONG_CFG_CMDS.SETTIME_CMD,
-        (params)=>{return [params.hour,params.minute,params.second];});
+  // ----------------------------- set timeout ------------------------------------
 
-    //----------------------------- set date ------------------------------------
+  export interface IBuffer {
+    setTimeout(params: ICommandSetStandardValue): IBuffer
+  }
 
-    export interface ICommandDateParams extends ICommandParamsBase {
-        year : number;
-        month: number;
-        day : number;
+  registerStandardSet<ICommandSetStandardValue>(
+    'setTimeout',
+    csafe.defs.LONG_CFG_CMDS.SETTIMEOUT_CMD,
+    params => {
+      return [params.value]
     }
-    export interface IBuffer {
-        setDate(params : ICommandDateParams) : IBuffer;
+  )
+
+  // ----------------------------- set work ------------------------------------
+
+  export interface IBuffer {
+    setWork(params: ICommandTimeParams): IBuffer
+  }
+
+  registerStandardSet<ICommandTimeParams>(
+    'setWork',
+    csafe.defs.LONG_DATA_CMDS.SETTWORK_CMD,
+    params => {
+      return [params.hour, params.minute, params.second]
     }
+  )
 
-    registerStandardSet<ICommandDateParams>("setDate",
-        csafe.defs.LONG_CFG_CMDS.SETDATE_CMD,
-        (params)=>{return [utils.getByte(params.year,0),params.month,params.day];});
+  // ----------------------------- set horizontal distance ------------------------------------
 
+  export interface ICommandDistanceParams extends ICommandSetStandardValue {
+    unit: Unit
+  }
 
-    //----------------------------- set timeout ------------------------------------
+  export interface IBuffer {
+    setDistance(params: ICommandDistanceParams): IBuffer
+  }
 
-    export interface IBuffer {
-        setTimeout(params : ICommandSetStandardValue) : IBuffer;
+  registerStandardSet<ICommandDistanceParams>(
+    'setDistance',
+    csafe.defs.LONG_DATA_CMDS.SETHORIZONTAL_CMD,
+    params => {
+      return [
+        utils.getByte(params.value, 0),
+        utils.getByte(params.value, 1),
+        params.unit
+      ]
     }
+  )
 
-    registerStandardSet<ICommandSetStandardValue>("setTimeout",
-        csafe.defs.LONG_CFG_CMDS.SETTIMEOUT_CMD,
-        (params)=>{return [params.value];});
+  // ----------------------------- set total calories ------------------------------------
+  export interface IBuffer {
+    setTotalCalories(params: ICommandSetStandardValue): IBuffer
+  }
 
-
-    //----------------------------- set work ------------------------------------
-
-    export interface IBuffer {
-        setWork(params : ICommandTimeParams) : IBuffer;
+  registerStandardSet<ICommandSetStandardValue>(
+    'setTotalCalories',
+    csafe.defs.LONG_DATA_CMDS.SETCALORIES_CMD,
+    params => {
+      return [utils.getByte(params.value, 0), utils.getByte(params.value, 1)]
     }
+  )
 
-    registerStandardSet<ICommandTimeParams>("setWork",
-        csafe.defs.LONG_DATA_CMDS.SETTWORK_CMD,
-        (params)=>{return [params.hour,params.minute,params.second];});
+  // ----------------------------- set power ------------------------------------
 
-    //----------------------------- set horizontal distance ------------------------------------
+  export interface ICommandPowerParams extends ICommandSetStandardValue {
+    unit: Unit
+  }
 
-    export interface ICommandDistanceParams  extends ICommandSetStandardValue {
-        unit: Unit;
+  export interface IBuffer {
+    setPower(params: ICommandPowerParams): IBuffer
+  }
+
+  registerStandardSet<ICommandPowerParams>(
+    'setPower',
+    csafe.defs.LONG_DATA_CMDS.SETPOWER_CMD,
+    params => {
+      return [
+        utils.getByte(params.value, 0),
+        utils.getByte(params.value, 1),
+        params.unit
+      ]
     }
-
-    export interface IBuffer {
-        setDistance(params : ICommandDistanceParams) : IBuffer;
-    }
-
-    registerStandardSet<ICommandDistanceParams>("setDistance",
-        csafe.defs.LONG_DATA_CMDS.SETHORIZONTAL_CMD,
-        (params)=>{return [utils.getByte(params.value,0),utils.getByte(params.value,1),params.unit];});
-
-
-    //----------------------------- set total calories ------------------------------------
-    export interface IBuffer {
-        setTotalCalories(params : ICommandSetStandardValue) : IBuffer;
-    }
-
-    registerStandardSet<ICommandSetStandardValue>("setTotalCalories",
-        csafe.defs.LONG_DATA_CMDS.SETCALORIES_CMD,
-        (params)=>{return [utils.getByte(params.value,0),utils.getByte(params.value,1)];});
-
-    //----------------------------- set power ------------------------------------
-
-    export interface ICommandPowerParams  extends ICommandSetStandardValue {
-        unit: Unit;
-    }
-
-    export interface IBuffer {
-        setPower(params : ICommandPowerParams) : IBuffer;
-    }
-
-    registerStandardSet<ICommandPowerParams>("setPower",
-        csafe.defs.LONG_DATA_CMDS.SETPOWER_CMD,
-        (params)=>{return [utils.getByte(params.value,0),utils.getByte(params.value,1),params.unit];});
-
+  )
 }

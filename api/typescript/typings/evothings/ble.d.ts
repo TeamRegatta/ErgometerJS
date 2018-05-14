@@ -1,152 +1,148 @@
 // API definition for EvoThings BLE plugin.
 //
 // Use jsdoc to generate documentation.
-declare module evothings {
+declare namespace evothings {
+  export namespace ble {
+    /** Information extracted from a scanRecord. Some or all of the fields may be undefined. This varies between BLE devices.
+     * Depending on OS version and BLE device, additional fields, not documented here, may be present.
+     * @typedef {Object} AdvertisementData
+     * @property {string} kCBAdvDataLocalName - The device's name. Equal to DeviceInfo.name.
+     * @property {number} kCBAdvDataChannel - A positive integer, the BLE channel on which the device listens for connections. Ignore this number.
+     * @property {boolean} kCBAdvDataIsConnectable - True if the device accepts connections. False if it doesn't.
+     * @property {array} kCBAdvDataServiceUUIDs - Array of strings, the UUIDs of services advertised by the device. Formatted according to RFC 4122, all lowercase.
+     * @property {string} kCBAdvDataManufacturerData - Base-64-encoded binary data. This field is used by BLE devices to advertise custom data that don't fit into any of the other fields.
+     */
+    interface AdvertisementData {
+      kCBAdvDataLocalName: string
+      kCBAdvDataChannel: number
+      kCBAdvDataIsConnectable: boolean
+      kCBAdvDataServiceUUIDs: string[]
+      kCBAdvDataManufacturerData: string
+    }
 
-    export module ble {
+    interface TranslationList {
+      [index: number]: string
+    }
 
-        /** Information extracted from a scanRecord. Some or all of the fields may be undefined. This varies between BLE devices.
-         * Depending on OS version and BLE device, additional fields, not documented here, may be present.
-         * @typedef {Object} AdvertisementData
-         * @property {string} kCBAdvDataLocalName - The device's name. Equal to DeviceInfo.name.
-         * @property {number} kCBAdvDataChannel - A positive integer, the BLE channel on which the device listens for connections. Ignore this number.
-         * @property {boolean} kCBAdvDataIsConnectable - True if the device accepts connections. False if it doesn't.
-         * @property {array} kCBAdvDataServiceUUIDs - Array of strings, the UUIDs of services advertised by the device. Formatted according to RFC 4122, all lowercase.
-         * @property {string} kCBAdvDataManufacturerData - Base-64-encoded binary data. This field is used by BLE devices to advertise custom data that don't fit into any of the other fields.
-         */
-        interface AdvertisementData {
-            kCBAdvDataLocalName : string;
-            kCBAdvDataChannel : number;
-            kCBAdvDataIsConnectable : boolean;
-            kCBAdvDataServiceUUIDs : string[];
-            kCBAdvDataManufacturerData : string;
-        }
+    /** Info about a BLE device.
+     * @typedef {Object} DeviceInfo
+     * @property {string} address - Has the form xx:xx:xx:xx:xx:xx, where x are hexadecimal characters.
+     * @property {string} address - Uniquely identifies the device. Pass this to connect().
+     * The form of the address depends on the host platform.
+     * @property {number} rssi - A negative integer, the signal strength in decibels.
+     * @property {string} name - The device's name, or nil.
+     * @property {string} scanRecord - Base64-encoded binary data. Its meaning is device-specific. Not available on iOS.
+     * @property {AdvertisementData} advertisementData - Object containing some of the data from the scanRecord. Available natively on iOS. Available on Android by parsing the scanRecord, which is implemented in the library {@link https://github.com/evothings/evothings-examples/tree/master/resources/libs/evothings/easyble|easyble.js}.
+     */
+    interface DeviceInfo {
+      address: string
+      rssi: number
+      name: string
+      scanRecord: string
+      advertisementData: AdvertisementData
+    }
 
-        interface TranslationList {[index: number] : string
-        }
+    interface FailCallback {
+      (errorString: string): void
+    }
 
-        /** Info about a BLE device.
-         * @typedef {Object} DeviceInfo
-         //* @property {string} address - Has the form xx:xx:xx:xx:xx:xx, where x are hexadecimal characters.
-         * @property {string} address - Uniquely identifies the device. Pass this to connect().
-         * The form of the address depends on the host platform.
-         * @property {number} rssi - A negative integer, the signal strength in decibels.
-         * @property {string} name - The device's name, or nil.
-         * @property {string} scanRecord - Base64-encoded binary data. Its meaning is device-specific. Not available on iOS.
-         * @property {AdvertisementData} advertisementData - Object containing some of the data from the scanRecord. Available natively on iOS. Available on Android by parsing the scanRecord, which is implemented in the library {@link https://github.com/evothings/evothings-examples/tree/master/resources/libs/evothings/easyble|easyble.js}.
-         */
-        interface DeviceInfo {
-            address : string;
-            rssi : number;
-            name : string;
-            scanRecord : string;
-            advertisementData : AdvertisementData;
-        }
+    interface EmptyCallback {
+      (): void
+    }
 
-        interface FailCallback {
-            (errorString:string) :void;
-        }
+    enum ConnectionState {
+      STATE_DISCONNECTED,
+      STATE_CONNECTING,
+      STATE_CONNECTED,
+      STATE_DISCONNECTING
+    }
 
-        interface EmptyCallback {
-            () :void;
-        }
+    /** Info about connection events and state.
+     * @typedef {Object} ConnectInfo
+     * @property {number} deviceHandle - Handle to the device. Save it for other function calls.
+     * @property {number} state - One of the {@link connectionState} keys.
+     */
+    interface ConnectInfo {
+      deviceHandle: number
+      state: ConnectionState
+    }
+    enum ServiceType {
+      SERVICE_TYPE_PRIMARY,
+      SERVICE_TYPE_SECONDARY
+    }
 
-        enum ConnectionState  {
-            STATE_DISCONNECTED,
-            STATE_CONNECTING,
-            STATE_CONNECTED,
-            STATE_DISCONNECTING,
-        }
+    enum WriteType {
+      WRITE_TYPE_NO_RESPONSE = 1,
+      WRITE_TYPE_DEFAULT = 2,
+      WRITE_TYPE_SIGNED = 4
+    }
 
-        /** Info about connection events and state.
-         * @typedef {Object} ConnectInfo
-         * @property {number} deviceHandle - Handle to the device. Save it for other function calls.
-         * @property {number} state - One of the {@link connectionState} keys.
-         */
-        interface ConnectInfo {
-            deviceHandle : number;
-            state : ConnectionState;
-        }
-        enum ServiceType  {
-            SERVICE_TYPE_PRIMARY,
-            SERVICE_TYPE_SECONDARY
-        }
+    enum Permission {
+      PERMISSION_READ = 1,
+      PERMISSION_READ_ENCRYPTED = 2,
+      PERMISSION_READ_ENCRYPTED_MITM = 4,
+      PERMISSION_WRITE = 16,
+      PERMISSION_WRITE_ENCRYPTED = 32,
+      PERMISSION_WRITE_ENCRYPTED_MITM = 64,
+      PERMISSION_WRITE_SIGNED = 128,
+      PERMISSION_WRITE_SIGNED_MITM = 256
+    }
 
-        enum WriteType {
-            WRITE_TYPE_NO_RESPONSE = 1,
-            WRITE_TYPE_DEFAULT = 2,
-            WRITE_TYPE_SIGNED = 4,
-        }
+    /** Describes a GATT service.
+     * @typedef {Object} Service
+     * @property {number} handle
+     * @property {string} uuid - Formatted according to RFC 4122, all lowercase.
+     * @property {serviceType} type
+     */
+    interface Service {
+      handle: number
+      uuid: string
+      type: ServiceType
+    }
+    /** Describes a GATT descriptor.
+     * @typedef {Object} Descriptor
+     * @property {number} handle
+     * @property {string} uuid - Formatted according to RFC 4122, all lowercase.
+     * @property {permission} permissions - Bitmask of zero or more permission flags.
+     *
+     */
+    interface Descriptor {
+      handle: number
+      uuid: string
+      permission: number
+    }
+    /** Describes a GATT characteristic.
+     * @typedef {Object} Characteristic
+     * @property {number} handle
+     * @property {string} uuid - Formatted according to RFC 4122, all lowercase.
+     * @property {permission} permissions - Bitmask of zero or more permission flags.
+     * @property {property} properties - Bitmask of zero or more property flags.
+     * @property {writeType} writeType
+     */
+    interface Characteristic {
+      handle: number
+      uuid: string
+      permission: number
+      properties: number
+      writeType: WriteType
+    }
+    interface CharacteristicExtended extends Characteristic {
+      descriptors: Descriptor[]
+    }
+    interface ServiceExtended extends Service {
+      characteristics: CharacteristicExtended[]
+    }
+    /**
+     * @callback serviceCallback
+     * @param {Array} services - Array of {@link Service} objects.
+     */
 
-        enum Permission {
-            PERMISSION_READ = 1,
-            PERMISSION_READ_ENCRYPTED = 2,
-            PERMISSION_READ_ENCRYPTED_MITM = 4,
-            PERMISSION_WRITE = 16,
-            PERMISSION_WRITE_ENCRYPTED = 32,
-            PERMISSION_WRITE_ENCRYPTED_MITM = 64,
-            PERMISSION_WRITE_SIGNED = 128,
-            PERMISSION_WRITE_SIGNED_MITM = 256,
-        }
+    interface ServiceCallback {
+      (services: Service[]): void
+    }
+    /** @module com.evothings.ble */
 
-
-        /** Describes a GATT service.
-         * @typedef {Object} Service
-         * @property {number} handle
-         * @property {string} uuid - Formatted according to RFC 4122, all lowercase.
-         * @property {serviceType} type
-         */
-        interface Service {
-            handle : number;
-            uuid : string;
-            type : ServiceType;
-        }
-        /** Describes a GATT descriptor.
-         * @typedef {Object} Descriptor
-         * @property {number} handle
-         * @property {string} uuid - Formatted according to RFC 4122, all lowercase.
-         * @property {permission} permissions - Bitmask of zero or more permission flags.
-         *
-         */
-        interface Descriptor {
-            handle : number;
-            uuid : string;
-            permission : number;
-
-        }
-        /** Describes a GATT characteristic.
-         * @typedef {Object} Characteristic
-         * @property {number} handle
-         * @property {string} uuid - Formatted according to RFC 4122, all lowercase.
-         * @property {permission} permissions - Bitmask of zero or more permission flags.
-         * @property {property} properties - Bitmask of zero or more property flags.
-         * @property {writeType} writeType
-         */
-        interface Characteristic {
-            handle : number;
-            uuid : string;
-            permission : number;
-            properties : number;
-            writeType : WriteType;
-        }
-        interface CharacteristicExtended extends Characteristic {
-            descriptors : Descriptor[];
-        }
-        interface ServiceExtended extends Service {
-            characteristics : CharacteristicExtended[];
-        }
-        /**
-         * @callback serviceCallback
-         * @param {Array} services - Array of {@link Service} objects.
-         */
-
-
-        interface ServiceCallback {
-            (services:Service[]) : void
-        }
-        /** @module com.evothings.ble */
-
-        /** Starts scanning for devices.
+    /** Starts scanning for devices.
          * <p>Found devices and errors will be reported to the supplied callbacks.</p>
          * <p>Will keep scanning indefinitely until you call stopScan().</p>
          * To conserve energy, call stopScan() as soon as you've found the device you're looking for.
@@ -167,28 +163,30 @@ declare module evothings {
         }
          );
          */
-        export function startScan(win:(device:DeviceInfo) => void, fail:FailCallback);
+    export function startScan(
+      win: (device: DeviceInfo) => void,
+      fail: FailCallback
+    )
 
-        /** This function is a parameter to startScan() and is called when a new device is discovered.
-         * @callback scanCallback
-         * @param {DeviceInfo} device
-         */
+    /** This function is a parameter to startScan() and is called when a new device is discovered.
+     * @callback scanCallback
+     * @param {DeviceInfo} device
+     */
 
+    /** This function is called when an operation fails.
+     * @callback failCallback
+     * @param {string} errorString - A human-readable string that describes the error that occurred.
+     */
 
-        /** This function is called when an operation fails.
-         * @callback failCallback
-         * @param {string} errorString - A human-readable string that describes the error that occurred.
-         */
-
-        /** Stops scanning for devices.
+    /** Stops scanning for devices.
          *
          * @example
          evothings.ble.stopScan();
          */
 
-        export function stopScan();
+    export function stopScan()
 
-        /** Connect to a remote device.
+    /** Connect to a remote device.
          * @param {string} address - From scanCallback.
          * @param {connectCallback} win
          * @param {failCallback} fail
@@ -208,25 +206,29 @@ declare module evothings {
         }
          );
          */
-        export function connect(address:string, win:(info:ConnectInfo) =>void, fail:FailCallback);
+    export function connect(
+      address: string,
+      win: (info: ConnectInfo) => void,
+      fail: FailCallback
+    )
 
-        /** Will be called whenever the device's connection state changes.
-         * @callback connectCallback
-         * @param {ConnectInfo} info
-         */
+    /** Will be called whenever the device's connection state changes.
+     * @callback connectCallback
+     * @param {ConnectInfo} info
+     */
 
-        /** Info about connection events and state.
-         * @typedef {Object} ConnectInfo
-         * @property {number} deviceHandle - Handle to the device. Save it for other function calls.
-         * @property {number} state - One of the {@link connectionState} keys.
-         */
+    /** Info about connection events and state.
+     * @typedef {Object} ConnectInfo
+     * @property {number} deviceHandle - Handle to the device. Save it for other function calls.
+     * @property {number} state - One of the {@link connectionState} keys.
+     */
 
-        /** A number-string map describing possible connection states.
-         * @global
-         * @readonly
-         * @enum {string}
-         */
-        /*
+    /** A number-string map describing possible connection states.
+     * @global
+     * @readonly
+     * @enum {string}
+     */
+    /*
          interface ConnectionState  {
          0: 'STATE_DISCONNECTED';
          1: 'STATE_CONNECTING';
@@ -236,9 +238,9 @@ declare module evothings {
 
          */
 
-        export var connectionState:TranslationList;
+    export var connectionState: TranslationList
 
-        /** Close the connection to a remote device.
+    /** Close the connection to a remote device.
          * <p>Frees any native resources associated with the device.
          * <p>Does not cause any callbacks to the function passed to connect().
 
@@ -246,9 +248,9 @@ declare module evothings {
          * @example
          evothings.ble.close(deviceHandle);
          */
-        export function close(deviceHandle);
+    export function close(deviceHandle)
 
-        /** Fetch the remote device's RSSI (signal strength).
+    /** Fetch the remote device's RSSI (signal strength).
          * @param {number} deviceHandle - A handle from {@link connectCallback}.
          * @param {rssiCallback} win
          * @param {failCallback} fail
@@ -265,14 +267,14 @@ declare module evothings {
         }
          );
          */
-        export function rssi(deviceHandle:number, win, fail:FailCallback);
+    export function rssi(deviceHandle: number, win, fail: FailCallback)
 
-        /** This function is called with an RSSI value.
-         * @callback rssiCallback
-         * @param {number} rssi - A negative integer, the signal strength in decibels.
-         */
+    /** This function is called with an RSSI value.
+     * @callback rssiCallback
+     * @param {number} rssi - A negative integer, the signal strength in decibels.
+     */
 
-        /** Fetch information about a remote device's services.
+    /** Fetch information about a remote device's services.
          * @param {number} deviceHandle - A handle from {@link connectCallback}.
          * @param {serviceCallback} win - Called with array of {@link Service} objects.
          * @param {failCallback} fail
@@ -295,16 +297,19 @@ declare module evothings {
             console.log('BLE services error: ' + errorCode);
         });
          */
-        export function services(deviceHandle:number, win:ServiceCallback, fail:FailCallback) ;
+    export function services(
+      deviceHandle: number,
+      win: ServiceCallback,
+      fail: FailCallback
+    )
 
+    /** A number-string map describing possible service types.
+     * @global
+     * @readonly
+     * @enum {string}
+     */
 
-        /** A number-string map describing possible service types.
-         * @global
-         * @readonly
-         * @enum {string}
-         */
-
-        /*
+    /*
 
          serviceType =  {
          0: 'SERVICE_TYPE_PRIMARY',
@@ -312,9 +317,9 @@ declare module evothings {
          };
 
          */
-        export var serviceType:TranslationList;
+    export var serviceType: TranslationList
 
-        /** Fetch information about a service's characteristics.
+    /** Fetch information about a service's characteristics.
          * @param {number} deviceHandle - A handle from {@link connectCallback}.
          * @param {number} serviceHandle - A handle from {@link serviceCallback}.
          * @param {characteristicCallback} win - Called with array of {@link Characteristic} objects.
@@ -336,28 +341,33 @@ declare module evothings {
             console.log('BLE characteristics error: ' + errorCode);
         });
          */
-        export function characteristics(deviceHandle:number, serviceHandle : number, win, fail:FailCallback);
+    export function characteristics(
+      deviceHandle: number,
+      serviceHandle: number,
+      win,
+      fail: FailCallback
+    )
 
-        /**
-         * @callback characteristicCallback
-         * @param {Array} characteristics - Array of {@link Characteristic} objects.
-         */
+    /**
+     * @callback characteristicCallback
+     * @param {Array} characteristics - Array of {@link Characteristic} objects.
+     */
 
-        /** Describes a GATT characteristic.
-         * @typedef {Object} Characteristic
-         * @property {number} handle
-         * @property {string} uuid - Formatted according to RFC 4122, all lowercase.
-         * @property {permission} permissions - Bitmask of zero or more permission flags.
-         * @property {property} properties - Bitmask of zero or more property flags.
-         * @property {writeType} writeType
-         */
+    /** Describes a GATT characteristic.
+     * @typedef {Object} Characteristic
+     * @property {number} handle
+     * @property {string} uuid - Formatted according to RFC 4122, all lowercase.
+     * @property {permission} permissions - Bitmask of zero or more permission flags.
+     * @property {property} properties - Bitmask of zero or more property flags.
+     * @property {writeType} writeType
+     */
 
-        /** A number-string map describing possible permission flags.
-         * @global
-         * @readonly
-         * @enum {string}
-         */
-        /*
+    /** A number-string map describing possible permission flags.
+     * @global
+     * @readonly
+     * @enum {string}
+     */
+    /*
          permission = {
          1: 'PERMISSION_READ',
          2: 'PERMISSION_READ_ENCRYPTED',
@@ -370,14 +380,14 @@ declare module evothings {
          }
 
          */
-        export var permission:TranslationList;
+    export var permission: TranslationList
 
-        /** A number-string map describing possible property flags.
-         * @global
-         * @readonly
-         * @enum {string}
-         */
-        /*
+    /** A number-string map describing possible property flags.
+     * @global
+     * @readonly
+     * @enum {string}
+     */
+    /*
          interface Property = {
          1: 'PROPERTY_BROADCAST',
          2: 'PROPERTY_READ',
@@ -389,18 +399,17 @@ declare module evothings {
          128: 'PROPERTY_EXTENDED_PROPS',
          };
          */
-        export var property:TranslationList;
+    export var property: TranslationList
 
+    /** A number-string map describing possible write types.
+     * @global
+     * @readonly
+     * @enum {string}
+     */
 
-        /** A number-string map describing possible write types.
-         * @global
-         * @readonly
-         * @enum {string}
-         */
+    export var writeType: TranslationList
 
-        export var writeType:TranslationList;
-
-        /** Fetch information about a characteristic's descriptors.
+    /** Fetch information about a characteristic's descriptors.
          * @param {number} deviceHandle - A handle from {@link connectCallback}.
          * @param {number} characteristicHandle - A handle from {@link characteristicCallback}.
          * @param {descriptorCallback} win - Called with array of {@link Descriptor} objects.
@@ -422,24 +431,28 @@ declare module evothings {
             console.log('BLE descriptors error: ' + errorCode);
         });
          */
-        export function descriptors(deviceHandle:number, characteristicHandle:number, win, fail:FailCallback);
+    export function descriptors(
+      deviceHandle: number,
+      characteristicHandle: number,
+      win,
+      fail: FailCallback
+    )
 
-        /**
-         * @callback descriptorCallback
-         * @param {Array} descriptors - Array of {@link Descriptor} objects.
-         */
+    /**
+     * @callback descriptorCallback
+     * @param {Array} descriptors - Array of {@link Descriptor} objects.
+     */
 
+    // TODO: What is read* ?
+    // read*: fetch and return value in one op.
+    // values should be cached on the JS side, if at all.
 
-// TODO: What is read* ?
-// read*: fetch and return value in one op.
-// values should be cached on the JS side, if at all.
+    /**
+     * @callback dataCallback
+     * @param {ArrayBuffer} data
+     */
 
-        /**
-         * @callback dataCallback
-         * @param {ArrayBuffer} data
-         */
-
-        /** Reads a characteristic's value from a remote device.
+    /** Reads a characteristic's value from a remote device.
          * @param {number} deviceHandle - A handle from {@link connectCallback}.
          * @param {number} characteristicHandle - A handle from {@link characteristicCallback}.
          * @param {dataCallback} win
@@ -457,9 +470,14 @@ declare module evothings {
             console.log('BLE readCharacteristic error: ' + errorCode);
         });
          */
-        export function readCharacteristic(deviceHandle:number, characteristicHandle:number, win:(data:ArrayBuffer) =>void, fail:FailCallback);
+    export function readCharacteristic(
+      deviceHandle: number,
+      characteristicHandle: number,
+      win: (data: ArrayBuffer) => void,
+      fail: FailCallback
+    )
 
-        /** Reads a descriptor's value from a remote device.
+    /** Reads a descriptor's value from a remote device.
          * @param {number} deviceHandle - A handle from {@link connectCallback}.
          * @param {number} descriptorHandle - A handle from {@link descriptorCallback}.
          * @param {dataCallback} win
@@ -477,35 +495,52 @@ declare module evothings {
             console.log('BLE readDescriptor error: ' + errorCode);
         });
          */
-        export function readDescriptor(deviceHandle:number, descriptorHandle:number, win:(data:ArrayBuffer) =>void, fail:FailCallback);
+    export function readDescriptor(
+      deviceHandle: number,
+      descriptorHandle: number,
+      win: (data: ArrayBuffer) => void,
+      fail: FailCallback
+    )
 
-        /**
+    /**
          * @callback emptyCallback - Callback that takes no parameters.
          This callback indicates that an operation was successful,
          without specifying and additional information.
          */
 
-        /** Write a characteristic's value to the remote device.
-         * @param {number} deviceHandle - A handle from {@link connectCallback}.
-         * @param {number} characteristicHandle - A handle from {@link characteristicCallback}.
-         * @param {ArrayBufferView} data - The value to be written.
-         * @param {emptyCallback} win
-         * @param {failCallback} fail
-         * @example TODO: Add example.
-         */
-        export function writeCharacteristic(deviceHandle:number, characteristicHandle:number, data:ArrayBufferView, win:EmptyCallback, fail:FailCallback) ;
+    /** Write a characteristic's value to the remote device.
+     * @param {number} deviceHandle - A handle from {@link connectCallback}.
+     * @param {number} characteristicHandle - A handle from {@link characteristicCallback}.
+     * @param {ArrayBufferView} data - The value to be written.
+     * @param {emptyCallback} win
+     * @param {failCallback} fail
+     * @example TODO: Add example.
+     */
+    export function writeCharacteristic(
+      deviceHandle: number,
+      characteristicHandle: number,
+      data: ArrayBufferView,
+      win: EmptyCallback,
+      fail: FailCallback
+    )
 
-        /** Write a descriptor's value to a remote device.
-         * @param {number} deviceHandle - A handle from {@link connectCallback}.
-         * @param {number} descriptorHandle - A handle from {@link descriptorCallback}.
-         * @param {ArrayBufferView} data - The value to be written.
-         * @param {emptyCallback} win
-         * @param {failCallback} fail
-         * @example TODO: Add example.
-         */
-        export function writeDescriptor(deviceHandle:number, descriptorHandle:number, data:ArrayBufferView, win:EmptyCallback, fail:FailCallback)
+    /** Write a descriptor's value to a remote device.
+     * @param {number} deviceHandle - A handle from {@link connectCallback}.
+     * @param {number} descriptorHandle - A handle from {@link descriptorCallback}.
+     * @param {ArrayBufferView} data - The value to be written.
+     * @param {emptyCallback} win
+     * @param {failCallback} fail
+     * @example TODO: Add example.
+     */
+    export function writeDescriptor(
+      deviceHandle: number,
+      descriptorHandle: number,
+      data: ArrayBufferView,
+      win: EmptyCallback,
+      fail: FailCallback
+    )
 
-        /** Request notification on changes to a characteristic's value.
+    /** Request notification on changes to a characteristic's value.
          * This is more efficient than polling the value using readCharacteristic().
          *
          * <p>To activate notifications,
@@ -530,9 +565,14 @@ declare module evothings {
             console.log('BLE enableNotification error: ' + errorCode);
         });
          */
-        export function enableNotification(deviceHandle:number, characteristicHandle:number, win:(data:ArrayBuffer) =>void, fail:FailCallback);
+    export function enableNotification(
+      deviceHandle: number,
+      characteristicHandle: number,
+      win: (data: ArrayBuffer) => void,
+      fail: FailCallback
+    )
 
-        /** Disable notification of changes to a characteristic's value.
+    /** Disable notification of changes to a characteristic's value.
          * @param {number} deviceHandle - A handle from {@link connectCallback}.
          * @param {number} characteristicHandle - A handle from {@link characteristicCallback}.
          * @param {emptyCallback} win
@@ -550,54 +590,64 @@ declare module evothings {
             console.log('BLE disableNotification error: ' + errorCode);
         });
          */
-        export function disableNotification(deviceHandle:number, characteristicHandle:number, win:EmptyCallback, fail);
+    export function disableNotification(
+      deviceHandle: number,
+      characteristicHandle: number,
+      win: EmptyCallback,
+      fail
+    )
 
-        /** i is an integer. It is converted to byte and put in an array[1].
-         * The array is returned.
-         * <p>assert(string.charCodeAt(0) == i).
-         *
-         * @param {number} i
-         * @param {dataCallback} win - Called every time the value changes.
-         */
-        export function testCharConversion(i:number, win:(data:ArrayBuffer) =>void);
+    /** i is an integer. It is converted to byte and put in an array[1].
+     * The array is returned.
+     * <p>assert(string.charCodeAt(0) == i).
+     *
+     * @param {number} i
+     * @param {dataCallback} win - Called every time the value changes.
+     */
+    export function testCharConversion(
+      i: number,
+      win: (data: ArrayBuffer) => void
+    )
 
-        /** Resets the device's Bluetooth system.
-         * This is useful on some buggy devices where BLE functions stops responding until reset.
-         * Available on Android 4.3+. This function takes 3-5 seconds to reset BLE.
-         * On iOS this function stops any ongoing scan operation and disconnects
-         * all connected devices.
-         *
-         * @param {emptyCallback} win
-         * @param {failCallback} fail
-         */
-        export function reset(win:EmptyCallback, fail:FailCallback);
+    /** Resets the device's Bluetooth system.
+     * This is useful on some buggy devices where BLE functions stops responding until reset.
+     * Available on Android 4.3+. This function takes 3-5 seconds to reset BLE.
+     * On iOS this function stops any ongoing scan operation and disconnects
+     * all connected devices.
+     *
+     * @param {emptyCallback} win
+     * @param {failCallback} fail
+     */
+    export function reset(win: EmptyCallback, fail: FailCallback)
 
-        /** Converts an ArrayBuffer containing UTF-8 data to a JavaScript String.
-         * @param {ArrayBuffer} a
-         * @returns string
-         */
-        export function fromUtf8(a:ArrayBuffer):string;
+    /** Converts an ArrayBuffer containing UTF-8 data to a JavaScript String.
+     * @param {ArrayBuffer} a
+     * @returns string
+     */
+    export function fromUtf8(a: ArrayBuffer): string
 
-        /** Converts a JavaScript String to an Uint8Array containing UTF-8 data.
-         * @param {string} s
-         * @returns Uint8Array
-         */
-        export function toUtf8(s:string):Uint8Array;
+    /** Converts a JavaScript String to an Uint8Array containing UTF-8 data.
+     * @param {string} s
+     * @returns Uint8Array
+     */
+    export function toUtf8(s: string): Uint8Array
 
-
-        /** Fetch information about a remote device's services,
-         * as well as its associated characteristics and descriptors.
-         *
-         * This function is an easy-to-use wrapper of the low-level functions
-         * ble.services(), ble.characteristics() and ble.descriptors().
-         *
-         * @param {number} deviceHandle - A handle from {@link connectCallback}.
-         * @param {serviceCallback} win - Called with array of {@link Service} objects.
-         * Those Service objects each have an additional field "characteristics", which is an array of {@link Characteristic} objects.
-         * Those Characteristic objects each have an additional field "descriptors", which is an array of {@link Descriptor} objects.
-         * @param {failCallback} fail
-         */
-        export function readAllServiceData(deviceHandle:number, win:(services:ServiceExtended[])=>void, fail:FailCallback);
-
-    }
+    /** Fetch information about a remote device's services,
+     * as well as its associated characteristics and descriptors.
+     *
+     * This function is an easy-to-use wrapper of the low-level functions
+     * ble.services(), ble.characteristics() and ble.descriptors().
+     *
+     * @param {number} deviceHandle - A handle from {@link connectCallback}.
+     * @param {serviceCallback} win - Called with array of {@link Service} objects.
+     * Those Service objects each have an additional field "characteristics", which is an array of {@link Characteristic} objects.
+     * Those Characteristic objects each have an additional field "descriptors", which is an array of {@link Descriptor} objects.
+     * @param {failCallback} fail
+     */
+    export function readAllServiceData(
+      deviceHandle: number,
+      win: (services: ServiceExtended[]) => void,
+      fail: FailCallback
+    )
+  }
 }

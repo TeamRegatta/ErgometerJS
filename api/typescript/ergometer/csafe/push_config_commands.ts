@@ -2,20 +2,21 @@
  * Created by tijmen on 06-02-16.
  */
 
-module ergometer.csafe {
+namespace ergometer.csafe {
+  // ----------------------------- workout type ------------------------------------
 
-    //----------------------------- workout type ------------------------------------
+  export interface ICommandSetWorkOutType extends ICommandParamsBase {
+    value: WorkoutType // program or pre stored work out
+  }
+  export interface IBuffer {
+    setWorkoutType(params: ICommandSetWorkOutType): IBuffer
+  }
 
-    export interface ICommandSetWorkOutType extends ICommandParamsBase {
-        value : WorkoutType; //program or pre stored work out
+  registerStandardSetConfig<ICommandSetWorkOutType>(
+    'setWorkoutType',
+    csafe.defs.PM_LONG_PUSH_CFG_CMDS.PM_SET_WORKOUTTYPE,
+    params => {
+      return [params.value]
     }
-    export interface IBuffer {
-        setWorkoutType(params : ICommandSetWorkOutType) : IBuffer;
-    }
-
-    registerStandardSetConfig<ICommandSetWorkOutType>("setWorkoutType",
-        csafe.defs.PM_LONG_PUSH_CFG_CMDS.PM_SET_WORKOUTTYPE,
-        (params)=>{return [params.value];});
+  )
 }
-
-
