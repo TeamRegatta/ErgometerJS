@@ -1,3 +1,8 @@
+module.exports = {
+    get: function () {
+        return ergometer;
+    }
+};
 /**
  * Created by tijmen on 25-12-15.
  */
