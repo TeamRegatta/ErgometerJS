@@ -1,386 +1,56 @@
-/**
- * Created by tijmen on 04/07/2017.
- *
- * queue function calls which returns a promise, converted to typescript
- * needed as work around for web blue tooth, this ensures that only one call is processed at at time
- *
- *
- */
-declare namespace ergometer.utils {
+declare module "ergometer/csafe/typedefinitions" {
     /**
-     * @return {Object}
+     * Created by tijmen on 16-01-16.
+     *
+     * translation of concept 2 csafe.h to typescript version  9/16/08 10:51a
      */
-    /**
-     * It limits concurrently executed promises
-     *
-     * @param {Number} [maxPendingPromises=Infinity] max number of concurrently executed promises
-     * @param {Number} [maxQueuedPromises=Infinity]  max number of queued promises
-     * @constructor
-     *
-     * @example
-     *
-     * const queue = new Queue(1);
-     *
-     * queue.add(function () {
-     *     // resolve of this promise will resume next request
-     *     return downloadTarballFromGithub(url, file);
-     * })
-     * .then(function (file) {
-     *     doStuffWith(file);
-     * });
-     *
-     * queue.add(function () {
-     *     return downloadTarballFromGithub(url, file);
-     * })
-     * // This request will be paused
-     * .then(function (file) {
-     *     doStuffWith(file);
-     * });
-     */
-    interface IPromiseFunction {
-        (...args: any[]): Promise<any | void>;
-    }
-    class FunctionQueue {
-        private maxPendingPromises;
-        private maxQueuedPromises;
-        private pendingPromises;
-        private queue;
-        constructor(maxPendingPromises?: number, maxQueuedPromises?: number);
-        /**
-         * @param {promiseGenerator}  a function which returns a promise
-         * @param {context} the object which is the context where the function is called in
-         * @param  {params} array of parameters for the function
-         * @return {Promise} promise which is resolved when the function is acually called
-         */
-        add(promiseGenerator: IPromiseFunction, context: any, ...params: any[]): Promise<any | void>;
-        /**
-         * Number of simultaneously running promises (which are resolving)
-         *
-         * @return {number}
-         */
-        getPendingLength(): number;
-        /**
-         * Number of queued promises (which are waiting)
-         *
-         * @return {number}
-         */
-        getQueueLength(): number;
-        /**
-         * @param {*} value
-         * @returns {LocalPromise}
-         */
-        private resolveWith(value);
-        /**
-         * @returns {boolean} true if first item removed from queue
-         * @private
-         */
-        private _dequeue();
-    }
-}
-/**
- *
- * Created by tijmen on 01-06-15.
- *
- * License:
- *
- * Copyright 2016 Tijmen van Gulik (tijmen@vangulik.org)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-declare namespace ergometer.pubSub {
-    interface ISubscription {
-        (...args: any[]): void;
-    }
-    interface ISubscriptionItem {
-        object: any;
-        func: ISubscription;
-    }
-    interface IDictionary {
-        [name: string]: ISubscriptionItem[];
-    }
-    class PubSub {
-        private registry;
-        pub(name: string, ...args: any[]): void;
-        pubASync(name: string, ...args: any[]): void;
-        sub(applyObject: any, name: string, fn: ISubscription): void;
-        unsub(name: string, fn: ISubscription): void;
-        subscribeCount(name: string): number;
-    }
-    interface ISubscriptionChanged {
-        (sender: any, count: number): void;
-    }
-    class Event<T extends ISubscription> {
-        protected _subscribed: ISubscriptionItem[];
-        protected _subScriptionChangedEvent: ISubscriptionChanged;
-        sub(applyObject: any, event: T): void;
-        unsub(event: T): void;
-        readonly pub: T;
-        readonly pubAsync: T;
-        readonly count: number;
-        registerChangedEvent(func: ISubscriptionChanged): void;
-        protected doChangedEvent(): void;
-        protected findSubscription(event: T): ISubscriptionItem;
-        protected doPub(args: any[]): void;
-    }
-}
-/**
- * Created by tijmen on 01-02-16.
- */
-declare namespace ergometer.ble {
-    interface IDevice {
-        address: string;
-        name: string;
-        rssi: number;
-        _internalDevice: any;
-    }
-    interface IFoundFunc {
-        (device: IDevice): void;
-    }
-    interface IDriver {
-        startScan(foundFn?: IFoundFunc): Promise<void>;
-        stopScan(): void;
-        connect(device: IDevice, disconnectFn: () => void): Promise<void>;
-        disconnect(): void;
-        writeCharacteristic(serviceUIID: string, characteristicUUID: string, data: ArrayBufferView): Promise<void>;
-        readCharacteristic(serviceUIID: string, characteristicUUID: string): Promise<ArrayBuffer>;
-        enableNotification(serviceUIID: string, characteristicUUID: string, receive: (data: ArrayBuffer) => void): Promise<void>;
-        disableNotification(serviceUIID: string, characteristicUUID: string): Promise<void>;
-    }
-}
-/**
- * Created by tijmen on 01-02-16.
- */
-declare namespace ergometer.ble {
-    class DriverBleat implements IDriver {
-        performanceMonitor: PerformanceMonitor;
-        private _device;
-        connect(device: IDevice, disconnectFn: () => void): Promise<void>;
-        disconnect(): void;
-        startScan(foundFn?: IFoundFunc): Promise<void>;
-        stopScan(): Promise<void>;
-        writeCharacteristic(serviceUIID: string, characteristicUUID: string, data: ArrayBufferView): Promise<void>;
-        readCharacteristic(serviceUIID: string, characteristicUUID: string): Promise<ArrayBuffer>;
-        enableNotification(serviceUIID: string, characteristicUUID: string, receive: (data: ArrayBuffer) => void): Promise<void>;
-        disableNotification(serviceUIID: string, characteristicUUID: string): Promise<void>;
-        private getCharacteristic(serviceUid, characteristicUid);
-    }
-}
-/**
- * Created by tijmen on 03/04/2017.
- */
-/**
- * Created by tijmen on 01-02-16.
- *
- * see simpleBLE.d.ts for the definitions of the simpleBLE
- * It assumes that there simple ble is already imported as a var named simpleBLE
- *
- */
-declare namespace ergometer.ble {
-    class DriverSimpleBLE implements IDriver {
-        performanceMonitor: PerformanceMonitor;
-        connect(device: IDevice, disconnectFn: () => void): Promise<void>;
-        disconnect(): void;
-        startScan(foundFn?: IFoundFunc): Promise<void>;
-        stopScan(): Promise<void>;
-        writeCharacteristic(serviceUIID: string, characteristicUUID: string, data: ArrayBufferView): Promise<void>;
-        readCharacteristic(serviceUIID: string, characteristicUUID: string): Promise<ArrayBuffer>;
-        enableNotification(serviceUIID: string, characteristicUUID: string, receive: (data: ArrayBuffer) => void): Promise<void>;
-        disableNotification(serviceUIID: string, characteristicUUID: string): Promise<void>;
-    }
-}
-/**
- * Created by tijmen on 17-07-16.
- */
-/**
- * Created by tijmen on 01-02-16.
- */
-declare namespace ergometer.ble {
-    function hasWebBlueTooth(): boolean;
-    class DriverWebBlueTooth implements IDriver {
-        private _device;
-        private _server;
-        private _disconnectFn;
-        private _listenerMap;
-        private _listerCharacteristicMap;
-        private _performanceMonitor;
-        constructor(performanceMonitor: PerformanceMonitor);
-        connect(device: IDevice, disconnectFn: () => void): Promise<void>;
-        disconnect(): void;
-        startScan(foundFn?: IFoundFunc): Promise<void>;
-        stopScan(): Promise<void>;
-        writeCharacteristic(serviceUIID: string, characteristicUUID: string, data: ArrayBufferView): Promise<void>;
-        readCharacteristic(serviceUIID: string, characteristicUUID: string): Promise<ArrayBuffer>;
-        enableNotification(serviceUIID: string, characteristicUUID: string, receive: (data: ArrayBuffer) => void): Promise<void>;
-        disableNotification(serviceUIID: string, characteristicUUID: string): Promise<void>;
-        private getCharacteristic(serviceUid, characteristicUid);
-        private onDisconnected(event);
-        private clearConnectionVars();
-        private onCharacteristicValueChanged(event);
-    }
-}
-/**
- * Created by tijmen on 16-02-16.
- */
-declare namespace ergometer.ble {
-    interface IRecordDevice {
-        address: string;
-        name: string;
-        rssi: number;
-    }
-    interface IRecordCharacteristic {
-        serviceUIID: string;
-        characteristicUUID: string;
-        data?: string;
-    }
-    enum RecordingEventType {
-        startScan = 0,
-        scanFoundFn = 1,
-        stopScan = 2,
-        connect = 3,
-        disconnectFn = 4,
-        disconnect = 5,
-        writeCharacteristic = 6,
-        readCharacteristic = 7,
-        enableNotification = 8,
-        notificationReceived = 9,
-        disableNotification = 10,
-    }
-    interface IRecordingItem {
-        timeStamp: number;
-        eventType: string;
-        timeStampReturn?: number;
-        data?: IRecordCharacteristic | IRecordDevice;
-        error?: any;
-    }
-    class RecordingDriver implements IDriver {
-        _performanceMonitor: PerformanceMonitor;
-        private _realDriver;
-        private _startTime;
-        private _events;
-        constructor(performanceMonitor: PerformanceMonitor, realDriver: IDriver);
-        addRecording(eventType: RecordingEventType, data?: IRecordCharacteristic | IRecordDevice): IRecordingItem;
-        events: ergometer.ble.IRecordingItem[];
-        clear(): void;
-        startRecording(): void;
-        startScan(foundFn?: IFoundFunc): Promise<void>;
-        stopScan(): void;
-        connect(device: IDevice, disconnectFn: () => void): Promise<void>;
-        disconnect(): void;
-        writeCharacteristic(serviceUIID: string, characteristicUUID: string, data: ArrayBufferView): Promise<void>;
-        readCharacteristic(serviceUIID: string, characteristicUUID: string): Promise<ArrayBuffer>;
-        enableNotification(serviceUIID: string, characteristicUUID: string, receive: (data: ArrayBuffer) => void): Promise<void>;
-        disableNotification(serviceUIID: string, characteristicUUID: string): Promise<void>;
-        protected getRelativeTime(): number;
-        protected recordResolveFunc(resolve: () => void, rec: IRecordingItem): () => void;
-        protected recordResolveBufferFunc(resolve: (data: ArrayBuffer) => void, rec: IRecordingItem): (data: ArrayBuffer) => void;
-        protected recordErrorFunc(reject: (e) => void, rec: IRecordingItem): (e) => void;
-    }
-}
-/**
- * Created by tijmen on 18-02-16.
- */
-declare namespace ergometer.ble {
-    interface CallBackEvent extends IRecordingItem {
-        resolve?: (e?: any) => void;
-        reject?: (e: any) => void;
-    }
-    class ReplayDriver implements IDriver {
-        private _realDriver;
-        private _events;
-        private _eventCallBackMethods;
-        private _eventCallbacks;
-        private _playing;
-        private _eventIndex;
-        private _startTime;
-        private _checkQueueTimerId;
-        private _performanceMonitor;
-        constructor(performanceMonitor: PerformanceMonitor, realDriver: IDriver);
-        readonly events: ergometer.ble.IRecordingItem[];
-        replay(events: IRecordingItem[]): void;
-        playing: boolean;
-        startScan(foundFn?: IFoundFunc): Promise<void>;
-        stopScan(): void;
-        connect(device: IDevice, disconnectFn: () => void): Promise<void>;
-        disconnect(): void;
-        writeCharacteristic(serviceUIID: string, characteristicUUID: string, data: ArrayBufferView): Promise<void>;
-        readCharacteristic(serviceUIID: string, characteristicUUID: string): Promise<ArrayBuffer>;
-        enableNotification(serviceUIID: string, characteristicUUID: string, receive: (data: ArrayBuffer) => void): Promise<void>;
-        disableNotification(serviceUIID: string, characteristicUUID: string): Promise<void>;
-        protected getRelativeTime(): number;
-        protected isCallBack(eventType: RecordingEventType): boolean;
-        protected isSameEvent(event1: IRecordingItem, event2: IRecordingItem): boolean;
-        protected runEvent(event: IRecordingItem, queuedEvent: CallBackEvent): void;
-        protected runTimedEvent(event: IRecordingItem, queuedEvent: CallBackEvent): void;
-        protected removeEvent(i: number): void;
-        protected checkQueue(): void;
-        protected checkAllEventsProcessd(): boolean;
-        protected timeNextCheck(timeStamp?: number): void;
-        protected addEvent(eventType: RecordingEventType, isMethod: boolean, resolve?: (e?: any) => void, reject?: (e: any) => void, serviceUIID?: string, characteristicUUID?: string): void;
-    }
-}
-/**
- * Created by tijmen on 16-01-16.
- *
- * translation of concept 2 csafe.h to typescript version  9/16/08 10:51a
- */
-declare namespace ergometer.csafe.defs {
-    const EXT_FRAME_START_BYTE = 240;
-    const FRAME_START_BYTE = 241;
-    const FRAME_END_BYTE = 242;
-    const FRAME_STUFF_BYTE = 243;
-    const FRAME_MAX_STUFF_OFFSET_BYTE = 3;
-    const FRAME_FLG_LEN = 2;
-    const EXT_FRAME_ADDR_LEN = 2;
-    const FRAME_CHKSUM_LEN = 1;
-    const SHORT_CMD_TYPE_MSK = 128;
-    const LONG_CMD_HDR_LENGTH = 2;
-    const LONG_CMD_BYTE_CNT_OFFSET = 1;
-    const RSP_HDR_LENGTH = 2;
-    const FRAME_STD_TYPE = 0;
-    const FRAME_EXT_TYPE = 1;
-    const DESTINATION_ADDR_HOST = 0;
-    const DESTINATION_ADDR_ERG_MASTER = 1;
-    const DESTINATION_ADDR_BROADCAST = 255;
-    const DESTINATION_ADDR_ERG_DEFAULT = 253;
-    const FRAME_MAXSIZE = 96;
-    const INTERFRAMEGAP_MIN = 50;
-    const CMDUPLIST_MAXSIZE = 10;
-    const MEMORY_BLOCKSIZE = 64;
-    const FORCEPLOT_BLOCKSIZE = 32;
-    const HEARTBEAT_BLOCKSIZE = 32;
-    const MANUFACTURE_ID = 22;
-    const CLASS_ID = 2;
-    const MODEL_NUM = 5;
-    const UNITS_TYPE = 0;
-    const SERIALNUM_DIGITS = 9;
-    const HMS_FORMAT_CNT = 3;
-    const YMD_FORMAT_CNT = 3;
-    const ERRORCODE_FORMAT_CNT = 3;
-    const CTRL_CMD_LONG_MIN = 1;
-    const CFG_CMD_LONG_MIN = 16;
-    const DATA_CMD_LONG_MIN = 32;
-    const AUDIO_CMD_LONG_MIN = 64;
-    const TEXTCFG_CMD_LONG_MIN = 96;
-    const TEXTSTATUS_CMD_LONG_MIN = 101;
-    const CAP_CMD_LONG_MIN = 112;
-    const PMPROPRIETARY_CMD_LONG_MIN = 118;
-    const CTRL_CMD_SHORT_MIN = 128;
-    const STATUS_CMD_SHORT_MIN = 145;
-    const DATA_CMD_SHORT_MIN = 160;
-    const AUDIO_CMD_SHORT_MIN = 192;
-    const TEXTCFG_CMD_SHORT_MIN = 224;
-    const TEXTSTATUS_CMD_SHORT_MIN = 229;
-    const enum SHORT_CTRL_CMDS {
+    export const EXT_FRAME_START_BYTE = 240;
+    export const FRAME_START_BYTE = 241;
+    export const FRAME_END_BYTE = 242;
+    export const FRAME_STUFF_BYTE = 243;
+    export const FRAME_MAX_STUFF_OFFSET_BYTE = 3;
+    export const FRAME_FLG_LEN = 2;
+    export const EXT_FRAME_ADDR_LEN = 2;
+    export const FRAME_CHKSUM_LEN = 1;
+    export const SHORT_CMD_TYPE_MSK = 128;
+    export const LONG_CMD_HDR_LENGTH = 2;
+    export const LONG_CMD_BYTE_CNT_OFFSET = 1;
+    export const RSP_HDR_LENGTH = 2;
+    export const FRAME_STD_TYPE = 0;
+    export const FRAME_EXT_TYPE = 1;
+    export const DESTINATION_ADDR_HOST = 0;
+    export const DESTINATION_ADDR_ERG_MASTER = 1;
+    export const DESTINATION_ADDR_BROADCAST = 255;
+    export const DESTINATION_ADDR_ERG_DEFAULT = 253;
+    export const FRAME_MAXSIZE = 96;
+    export const INTERFRAMEGAP_MIN = 50;
+    export const CMDUPLIST_MAXSIZE = 10;
+    export const MEMORY_BLOCKSIZE = 64;
+    export const FORCEPLOT_BLOCKSIZE = 32;
+    export const HEARTBEAT_BLOCKSIZE = 32;
+    export const MANUFACTURE_ID = 22;
+    export const CLASS_ID = 2;
+    export const MODEL_NUM = 5;
+    export const UNITS_TYPE = 0;
+    export const SERIALNUM_DIGITS = 9;
+    export const HMS_FORMAT_CNT = 3;
+    export const YMD_FORMAT_CNT = 3;
+    export const ERRORCODE_FORMAT_CNT = 3;
+    export const CTRL_CMD_LONG_MIN = 1;
+    export const CFG_CMD_LONG_MIN = 16;
+    export const DATA_CMD_LONG_MIN = 32;
+    export const AUDIO_CMD_LONG_MIN = 64;
+    export const TEXTCFG_CMD_LONG_MIN = 96;
+    export const TEXTSTATUS_CMD_LONG_MIN = 101;
+    export const CAP_CMD_LONG_MIN = 112;
+    export const PMPROPRIETARY_CMD_LONG_MIN = 118;
+    export const CTRL_CMD_SHORT_MIN = 128;
+    export const STATUS_CMD_SHORT_MIN = 145;
+    export const DATA_CMD_SHORT_MIN = 160;
+    export const AUDIO_CMD_SHORT_MIN = 192;
+    export const TEXTCFG_CMD_SHORT_MIN = 224;
+    export const TEXTSTATUS_CMD_SHORT_MIN = 229;
+    export const enum SHORT_CTRL_CMDS {
         GETSTATUS_CMD = 128,
         RESET_CMD = 129,
         GOIDLE_CMD = 130,
@@ -391,7 +61,7 @@ declare namespace ergometer.csafe.defs {
         BADID_CMD = 136,
         CTRL_CMD_SHORT_MAX = 137,
     }
-    const enum SHORT_STATUS_CMDS {
+    export const enum SHORT_STATUS_CMDS {
         GETVERSION_CMD = 145,
         GETID_CMD = 146,
         GETUNITS_CMD = 147,
@@ -406,7 +76,7 @@ declare namespace ergometer.csafe.defs {
         GETUSERCFG2_CMD = 159,
         STATUS_CMD_SHORT_MAX = 160,
     }
-    const enum SHORT_DATA_CMDS {
+    export const enum SHORT_DATA_CMDS {
         GETTWORK_CMD = 160,
         GETHORIZONTAL_CMD = 161,
         GETVERTICAL_CMD = 162,
@@ -430,29 +100,29 @@ declare namespace ergometer.csafe.defs {
         GETUSERDATA2_CMD = 191,
         DATA_CMD_SHORT_MAX = 192,
     }
-    const enum SHORT_AUDIO_CMDS {
+    export const enum SHORT_AUDIO_CMDS {
         GETAUDIOCHANNEL_CMD = 192,
         GETAUDIOVOLUME_CMD = 193,
         GETAUDIOMUTE_CMD = 194,
         AUDIO_CMD_SHORT_MAX = 195,
     }
-    const enum SHORT_TEXTCFG_CMDS {
+    export const enum SHORT_TEXTCFG_CMDS {
         ENDTEXT_CMD = 224,
         DISPLAYPOPUP_CMD = 225,
         TEXTCFG_CMD_SHORT_MAX = 226,
     }
-    const enum SHORT_TEXTSTATUS_CMDS {
+    export const enum SHORT_TEXTSTATUS_CMDS {
         GETPOPUPSTATUS_CMD = 229,
         TEXTSTATUS_CMD_SHORT_MAX = 230,
     }
-    const enum LONG_CTRL_CMDS {
+    export const enum LONG_CTRL_CMDS {
         AUTOUPLOAD_CMD = 1,
         UPLIST_CMD = 2,
         UPSTATUSSEC_CMD = 4,
         UPLISTSEC_CMD = 5,
         CTRL_CMD_LONG_MAX = 6,
     }
-    const enum LONG_CFG_CMDS {
+    export const enum LONG_CFG_CMDS {
         IDDIGITS_CMD = 16,
         SETTIME_CMD = 17,
         SETDATE_CMD = 18,
@@ -461,7 +131,7 @@ declare namespace ergometer.csafe.defs {
         SETUSERCFG2_CMD = 27,
         CFG_CMD_LONG_MAX = 28,
     }
-    const enum LONG_DATA_CMDS {
+    export const enum LONG_DATA_CMDS {
         SETTWORK_CMD = 32,
         SETHORIZONTAL_CMD = 33,
         SETVERTICAL_CMD = 34,
@@ -481,7 +151,7 @@ declare namespace ergometer.csafe.defs {
         SETHRMAX_CMD = 54,
         DATA_CMD_LONG_MAX = 55,
     }
-    const enum LONG_AUDIO_CMDS {
+    export const enum LONG_AUDIO_CMDS {
         SETCHANNELRANGE_CMD = 64,
         SETVOLUMERANGE_CMD = 65,
         SETAUDIOMUTE_CMD = 66,
@@ -489,37 +159,37 @@ declare namespace ergometer.csafe.defs {
         SETAUDIOVOLUME_CMD = 68,
         AUDIO_CMD_LONG_MAX = 69,
     }
-    const enum LONG_TEXTCFG_CMDS {
+    export const enum LONG_TEXTCFG_CMDS {
         STARTTEXT_CMD = 96,
         APPENDTEXT_CMD = 97,
         TEXTCFG_CMD_LONG_MAX = 98,
     }
-    const enum LONG_TEXTSTATUS_CMDS {
+    export const enum LONG_TEXTSTATUS_CMDS {
         GETTEXTSTATUS_CMD = 101,
         TEXTSTATUS_CMD_LONG_MAX = 102,
     }
-    const enum LONG_CAP_CMDS {
+    export const enum LONG_CAP_CMDS {
         GETCAPS_CMD = 112,
         GETUSERCAPS1_CMD = 126,
         GETUSERCAPS2_CMD = 127,
         CAP_CMD_LONG_MAX = 128,
     }
-    const enum LONG_PMPROPRIETARY_CMDS {
+    export const enum LONG_PMPROPRIETARY_CMDS {
         SETPMCFG_CMD = 118,
         SETPMDATA_CMD = 119,
         GETPMCFG_CMD = 126,
         GETPMDATA_CMD = 127,
         PMPROPRIETARY_CMD_LONG_MAX = 128,
     }
-    const GETPMCFG_CMD_SHORT_MIN = 128;
-    const GETPMCFG_CMD_LONG_MIN = 80;
-    const SETPMCFG_CMD_SHORT_MIN = 224;
-    const SETPMCFG_CMD_LONG_MIN = 0;
-    const GETPMDATA_CMD_SHORT_MIN = 160;
-    const GETPMDATA_CMD_LONG_MIN = 104;
-    const SETPMDATA_CMD_SHORT_MIN = 208;
-    const SETPMDATA_CMD_LONG_MIN = 48;
-    const enum PM_SHORT_PULL_CFG_CMDS {
+    export const GETPMCFG_CMD_SHORT_MIN = 128;
+    export const GETPMCFG_CMD_LONG_MIN = 80;
+    export const SETPMCFG_CMD_SHORT_MIN = 224;
+    export const SETPMCFG_CMD_LONG_MIN = 0;
+    export const GETPMDATA_CMD_SHORT_MIN = 160;
+    export const GETPMDATA_CMD_LONG_MIN = 104;
+    export const SETPMDATA_CMD_SHORT_MIN = 208;
+    export const SETPMDATA_CMD_LONG_MIN = 48;
+    export const enum PM_SHORT_PULL_CFG_CMDS {
         PM_GET_FW_VERSION = 128,
         PM_GET_HW_VERSION = 129,
         PM_GET_HW_ADDRESS = 130,
@@ -553,7 +223,7 @@ declare namespace ergometer.csafe.defs {
         PM_GET_WORKOUTINTERVALCOUNT = 159,
         GETPMCFG_CMD_SHORT_MAX = 160,
     }
-    const enum PM_SHORT_PULL_DATA_CMDS {
+    export const enum PM_SHORT_PULL_DATA_CMDS {
         PM_GET_WORKTIME = 160,
         PM_GET_PROJECTED_WORKTIME = 161,
         PM_GET_TOTAL_RESTTIME = 162,
@@ -604,7 +274,7 @@ declare namespace ergometer.csafe.defs {
         PM_GET_RESTTIME = 207,
         GETPMDATA_CMD_SHORT_MAX = 208,
     }
-    const enum PM_SHORT_PUSH_DATA_CMDS {
+    export const enum PM_SHORT_PUSH_DATA_CMDS {
         PM_SET_SYNC_DISTANCE = 208,
         PM_SET_SYNC_STROKEPACE = 209,
         PM_SET_SYNC_AVG_HEARTRATE = 210,
@@ -616,12 +286,12 @@ declare namespace ergometer.csafe.defs {
         PM_SET_SYNC_DATAALL = 216,
         SETPMDATA_CMD_SHORT_MAX = 217,
     }
-    const enum PM_SHORT_PUSH_CFG_CMDS {
+    export const enum PM_SHORT_PUSH_CFG_CMDS {
         PM_SET_RESET_ALL = 224,
         PM_SET_RESET_ERGNUMBER = 225,
         SETPMCFG_CMD_SHORT_MAX = 226,
     }
-    const enum PM_LONG_PUSH_CFG_CMDS {
+    export const enum PM_LONG_PUSH_CFG_CMDS {
         PM_SET_BAUDRATE = 0,
         PM_SET_WORKOUTTYPE = 1,
         PM_SET_STARTTYPE = 2,
@@ -669,7 +339,7 @@ declare namespace ergometer.csafe.defs {
         PM_SET_SENSOR_CHANNEL = 47,
         SETPMCFG_CMD_LONG_MAX = 48,
     }
-    const enum PM_LONG_PUSH_DATA_CMDS {
+    export const enum PM_LONG_PUSH_DATA_CMDS {
         PM_SET_TEAM_DISTANCE = 48,
         PM_SET_TEAM_FINISH_TIME = 49,
         PM_SET_RACEPARTICIPANT = 50,
@@ -682,7 +352,7 @@ declare namespace ergometer.csafe.defs {
         PM_SET_MEMORY = 79,
         SETPMDATA_CMD_LONG_MAX = 80,
     }
-    const enum PM_LONG_PULL_CFG_CMDS {
+    export const enum PM_LONG_PULL_CFG_CMDS {
         PM_GET_ERGNUMBER = 80,
         PM_GET_ERGNUMBERREQUEST = 81,
         PM_GET_USERIDSTRING = 82,
@@ -691,7 +361,7 @@ declare namespace ergometer.csafe.defs {
         PM_GET_USER_PROFILE = 85,
         GETPMCFG_CMD_LONG_MAX = 86,
     }
-    const enum PM_LONG_PULL_DATA_CMDS {
+    export const enum PM_LONG_PULL_DATA_CMDS {
         PM_GET_MEMORY = 104,
         PM_GET_LOGCARDMEMORY = 105,
         PM_GET_INTERNALLOGMEMORY = 106,
@@ -700,259 +370,190 @@ declare namespace ergometer.csafe.defs {
         PM_GET_UI_EVENTS = 109,
         GETPMDATA_CMD_LONG_MAX = 110,
     }
-    const PREVOK_FLG = 0;
-    const PREVREJECT_FLG = 16;
-    const PREVBAD_FLG = 32;
-    const PREVNOTRDY_FLG = 48;
-    const PREVFRAMESTATUS_MSK = 48;
-    const SLAVESTATE_ERR_FLG = 0;
-    const SLAVESTATE_RDY_FLG = 1;
-    const SLAVESTATE_IDLE_FLG = 2;
-    const SLAVESTATE_HAVEID_FLG = 3;
-    const SLAVESTATE_INUSE_FLG = 5;
-    const SLAVESTATE_PAUSE_FLG = 6;
-    const SLAVESTATE_FINISH_FLG = 7;
-    const SLAVESTATE_MANUAL_FLG = 8;
-    const SLAVESTATE_OFFLINE_FLG = 9;
-    const FRAMECNT_FLG = 128;
-    const SLAVESTATE_MSK = 15;
-    const AUTOSTATUS_FLG = 1;
-    const UPSTATUS_FLG = 2;
-    const UPLIST_FLG = 4;
-    const ACK_FLG = 16;
-    const EXTERNCONTROL_FLG = 64;
-    const CAPCODE_PROTOCOL = 0;
-    const CAPCODE_POWER = 1;
-    const CAPCODE_TEXT = 2;
-    const DISTANCE_MILE_0_0 = 1;
-    const DISTANCE_MILE_0_1 = 2;
-    const DISTANCE_MILE_0_2 = 3;
-    const DISTANCE_MILE_0_3 = 4;
-    const DISTANCE_FEET_0_0 = 5;
-    const DISTANCE_INCH_0_0 = 6;
-    const WEIGHT_LBS_0_0 = 7;
-    const WEIGHT_LBS_0_1 = 8;
-    const DISTANCE_FEET_1_0 = 10;
-    const SPEED_MILEPERHOUR_0_0 = 16;
-    const SPEED_MILEPERHOUR_0_1 = 17;
-    const SPEED_MILEPERHOUR_0_2 = 18;
-    const SPEED_FEETPERMINUTE_0_0 = 19;
-    const DISTANCE_KM_0_0 = 33;
-    const DISTANCE_KM_0_1 = 34;
-    const DISTANCE_KM_0_2 = 35;
-    const DISTANCE_METER_0_0 = 36;
-    const DISTANCE_METER_0_1 = 37;
-    const DISTANCE_CM_0_0 = 38;
-    const WEIGHT_KG_0_0 = 39;
-    const WEIGHT_KG_0_1 = 40;
-    const SPEED_KMPERHOUR_0_0 = 48;
-    const SPEED_KMPERHOUR_0_1 = 49;
-    const SPEED_KMPERHOUR_0_2 = 50;
-    const SPEED_METERPERMINUTE_0_0 = 51;
-    const PACE_MINUTEPERMILE_0_0 = 55;
-    const PACE_MINUTEPERKM_0_0 = 56;
-    const PACE_SECONDSPERKM_0_0 = 57;
-    const PACE_SECONDSPERMILE_0_0 = 58;
-    const DISTANCE_FLOORS_0_0 = 65;
-    const DISTANCE_FLOORS_0_1 = 66;
-    const DISTANCE_STEPS_0_0 = 67;
-    const DISTANCE_REVS_0_0 = 68;
-    const DISTANCE_STRIDES_0_0 = 69;
-    const DISTANCE_STROKES_0_0 = 70;
-    const MISC_BEATS_0_0 = 71;
-    const ENERGY_CALORIES_0_0 = 72;
-    const GRADE_PERCENT_0_0 = 74;
-    const GRADE_PERCENT_0_2 = 75;
-    const GRADE_PERCENT_0_1 = 76;
-    const CADENCE_FLOORSPERMINUTE_0_1 = 79;
-    const CADENCE_FLOORSPERMINUTE_0_0 = 80;
-    const CADENCE_STEPSPERMINUTE_0_0 = 81;
-    const CADENCE_REVSPERMINUTE_0_0 = 82;
-    const CADENCE_STRIDESPERMINUTE_0_0 = 83;
-    const CADENCE_STROKESPERMINUTE_0_0 = 84;
-    const MISC_BEATSPERMINUTE_0_0 = 85;
-    const BURN_CALORIESPERMINUTE_0_0 = 86;
-    const BURN_CALORIESPERHOUR_0_0 = 87;
-    const POWER_WATTS_0_0 = 88;
-    const ENERGY_INCHLB_0_0 = 90;
-    const ENERGY_FOOTLB_0_0 = 91;
-    const ENERGY_NM_0_0 = 92;
-    const KG_TO_LBS = 2.2046;
-    const LBS_TO_KG: number;
-    const IDDIGITS_MIN = 2;
-    const IDDIGITS_MAX = 5;
-    const DEFAULT_IDDIGITS = 5;
-    const DEFAULT_ID = 0;
-    const MANUAL_ID = 999999999;
-    const DEFAULT_SLAVESTATE_TIMEOUT = 20;
-    const PAUSED_SLAVESTATE_TIMEOUT = 220;
-    const INUSE_SLAVESTATE_TIMEOUT = 6;
-    const IDLE_SLAVESTATE_TIMEOUT = 30;
-    const BASE_YEAR = 1900;
-    const DEFAULT_STATUSUPDATE_INTERVAL = 256;
-    const DEFAULT_CMDUPLIST_INTERVAL = 256;
+    export const PREVOK_FLG = 0;
+    export const PREVREJECT_FLG = 16;
+    export const PREVBAD_FLG = 32;
+    export const PREVNOTRDY_FLG = 48;
+    export const PREVFRAMESTATUS_MSK = 48;
+    export const SLAVESTATE_ERR_FLG = 0;
+    export const SLAVESTATE_RDY_FLG = 1;
+    export const SLAVESTATE_IDLE_FLG = 2;
+    export const SLAVESTATE_HAVEID_FLG = 3;
+    export const SLAVESTATE_INUSE_FLG = 5;
+    export const SLAVESTATE_PAUSE_FLG = 6;
+    export const SLAVESTATE_FINISH_FLG = 7;
+    export const SLAVESTATE_MANUAL_FLG = 8;
+    export const SLAVESTATE_OFFLINE_FLG = 9;
+    export const FRAMECNT_FLG = 128;
+    export const SLAVESTATE_MSK = 15;
+    export const AUTOSTATUS_FLG = 1;
+    export const UPSTATUS_FLG = 2;
+    export const UPLIST_FLG = 4;
+    export const ACK_FLG = 16;
+    export const EXTERNCONTROL_FLG = 64;
+    export const CAPCODE_PROTOCOL = 0;
+    export const CAPCODE_POWER = 1;
+    export const CAPCODE_TEXT = 2;
+    export const DISTANCE_MILE_0_0 = 1;
+    export const DISTANCE_MILE_0_1 = 2;
+    export const DISTANCE_MILE_0_2 = 3;
+    export const DISTANCE_MILE_0_3 = 4;
+    export const DISTANCE_FEET_0_0 = 5;
+    export const DISTANCE_INCH_0_0 = 6;
+    export const WEIGHT_LBS_0_0 = 7;
+    export const WEIGHT_LBS_0_1 = 8;
+    export const DISTANCE_FEET_1_0 = 10;
+    export const SPEED_MILEPERHOUR_0_0 = 16;
+    export const SPEED_MILEPERHOUR_0_1 = 17;
+    export const SPEED_MILEPERHOUR_0_2 = 18;
+    export const SPEED_FEETPERMINUTE_0_0 = 19;
+    export const DISTANCE_KM_0_0 = 33;
+    export const DISTANCE_KM_0_1 = 34;
+    export const DISTANCE_KM_0_2 = 35;
+    export const DISTANCE_METER_0_0 = 36;
+    export const DISTANCE_METER_0_1 = 37;
+    export const DISTANCE_CM_0_0 = 38;
+    export const WEIGHT_KG_0_0 = 39;
+    export const WEIGHT_KG_0_1 = 40;
+    export const SPEED_KMPERHOUR_0_0 = 48;
+    export const SPEED_KMPERHOUR_0_1 = 49;
+    export const SPEED_KMPERHOUR_0_2 = 50;
+    export const SPEED_METERPERMINUTE_0_0 = 51;
+    export const PACE_MINUTEPERMILE_0_0 = 55;
+    export const PACE_MINUTEPERKM_0_0 = 56;
+    export const PACE_SECONDSPERKM_0_0 = 57;
+    export const PACE_SECONDSPERMILE_0_0 = 58;
+    export const DISTANCE_FLOORS_0_0 = 65;
+    export const DISTANCE_FLOORS_0_1 = 66;
+    export const DISTANCE_STEPS_0_0 = 67;
+    export const DISTANCE_REVS_0_0 = 68;
+    export const DISTANCE_STRIDES_0_0 = 69;
+    export const DISTANCE_STROKES_0_0 = 70;
+    export const MISC_BEATS_0_0 = 71;
+    export const ENERGY_CALORIES_0_0 = 72;
+    export const GRADE_PERCENT_0_0 = 74;
+    export const GRADE_PERCENT_0_2 = 75;
+    export const GRADE_PERCENT_0_1 = 76;
+    export const CADENCE_FLOORSPERMINUTE_0_1 = 79;
+    export const CADENCE_FLOORSPERMINUTE_0_0 = 80;
+    export const CADENCE_STEPSPERMINUTE_0_0 = 81;
+    export const CADENCE_REVSPERMINUTE_0_0 = 82;
+    export const CADENCE_STRIDESPERMINUTE_0_0 = 83;
+    export const CADENCE_STROKESPERMINUTE_0_0 = 84;
+    export const MISC_BEATSPERMINUTE_0_0 = 85;
+    export const BURN_CALORIESPERMINUTE_0_0 = 86;
+    export const BURN_CALORIESPERHOUR_0_0 = 87;
+    export const POWER_WATTS_0_0 = 88;
+    export const ENERGY_INCHLB_0_0 = 90;
+    export const ENERGY_FOOTLB_0_0 = 91;
+    export const ENERGY_NM_0_0 = 92;
+    export const KG_TO_LBS = 2.2046;
+    export const LBS_TO_KG: number;
+    export const IDDIGITS_MIN = 2;
+    export const IDDIGITS_MAX = 5;
+    export const DEFAULT_IDDIGITS = 5;
+    export const DEFAULT_ID = 0;
+    export const MANUAL_ID = 999999999;
+    export const DEFAULT_SLAVESTATE_TIMEOUT = 20;
+    export const PAUSED_SLAVESTATE_TIMEOUT = 220;
+    export const INUSE_SLAVESTATE_TIMEOUT = 6;
+    export const IDLE_SLAVESTATE_TIMEOUT = 30;
+    export const BASE_YEAR = 1900;
+    export const DEFAULT_STATUSUPDATE_INTERVAL = 256;
+    export const DEFAULT_CMDUPLIST_INTERVAL = 256;
 }
-/**
- * Created by tijmen on 19-01-16.
- *
- * Extensible frame work so you can add your own csafe commands to the buffer
- *
- * this is the core, you do not have to change this code.
- *
- */
-declare namespace ergometer.csafe {
-    interface ICommandParamsBase {
-        onError?: ErrorHandler;
-        onDataReceived?: (data: any) => void;
+declare module "ergometer/pubsub" {
+    /**
+     *
+     * Created by tijmen on 01-06-15.
+     *
+     * License:
+     *
+     * Copyright 2016 Tijmen van Gulik (tijmen@vangulik.org)
+     *
+     * Licensed under the Apache License, Version 2.0 (the "License");
+     * you may not use this file except in compliance with the License.
+     * You may obtain a copy of the License at
+     *
+     * http://www.apache.org/licenses/LICENSE-2.0
+     *
+     * Unless required by applicable law or agreed to in writing, software
+     * distributed under the License is distributed on an "AS IS" BASIS,
+     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     * See the License for the specific language governing permissions and
+     * limitations under the License.
+     */
+    export interface ISubscription {
+        (...args: any[]): void;
     }
-    interface IRawCommand {
-        waitForResponse: boolean;
-        command: number;
-        detailCommand?: number;
-        data?: number[];
-        onDataReceived?: (data: DataView) => void;
-        onError?: ErrorHandler;
-        _timestamp?: number;
+    export interface ISubscriptionItem {
+        object: any;
+        func: ISubscription;
     }
-    interface IBuffer {
-        rawCommands: IRawCommand[];
-        clear(): IBuffer;
-        addRawCommand(info: IRawCommand): any;
-        send(success?: () => void, error?: ErrorHandler): Promise<void>;
+    export interface IDictionary {
+        [name: string]: ISubscriptionItem[];
     }
-    interface ICommand {
-        (buffer: IBuffer, monitor: PerformanceMonitor): void;
+    export class PubSub {
+        private registry;
+        pub(name: string, ...args: any[]): void;
+        pubASync(name: string, ...args: any[]): void;
+        sub(applyObject: any, name: string, fn: ISubscription): void;
+        unsub(name: string, fn: ISubscription): void;
+        subscribeCount(name: string): number;
     }
-    class CommandManagager {
-        private _commands;
-        register(createCommand: ICommand): void;
-        apply(buffer: IBuffer, monitor: PerformanceMonitor): void;
+    export interface ISubscriptionChanged {
+        (sender: any, count: number): void;
     }
-    let commandManager: CommandManagager;
-    interface ICommandSetStandardValue extends ICommandParamsBase {
-        value: number;
-    }
-    function registerStandardSet<T extends ICommandParamsBase>(functionName: string, command: number, setParams: (params: T) => number[]): void;
-    function registerStandardSetConfig<T extends ICommandParamsBase>(functionName: string, command: number, setParams: (params: T) => number[]): void;
-    function registerStandardShortGet<T extends ICommandParamsBase, U>(functionName: string, command: number, converter: (data: DataView) => U): void;
-}
-/**
- * Created by tijmen on 19-01-16.
- *
- * Extensible frame work so you can add your own csafe commands to the buffer
- *
- */
-declare namespace ergometer.csafe {
-    interface ICommandStrokeState extends ICommandParamsBase {
-        onDataReceived: (state: StrokeState) => void;
-    }
-    interface IBuffer {
-        getStrokeState(params: ICommandStrokeState): IBuffer;
-    }
-    interface ICommandPowerCurve {
-        onDataReceived: (curve: number[]) => void;
-        onError?: ErrorHandler;
-    }
-    interface IBuffer {
-        getPowerCurve(params: ICommandPowerCurve): IBuffer;
-    }
-    interface ICommandProgramParams extends ICommandParamsBase {
-        value: Program;
-    }
-    interface IBuffer {
-        setProgram(params: ICommandProgramParams): IBuffer;
-    }
-    interface ICommandTimeParams extends ICommandParamsBase {
-        hour: number;
-        minute: number;
-        second: number;
-    }
-    interface IBuffer {
-        setTime(params: ICommandTimeParams): IBuffer;
-    }
-    interface ICommandDateParams extends ICommandParamsBase {
-        year: number;
-        month: number;
-        day: number;
-    }
-    interface IBuffer {
-        setDate(params: ICommandDateParams): IBuffer;
-    }
-    interface IBuffer {
-        setTimeout(params: ICommandSetStandardValue): IBuffer;
-    }
-    interface IBuffer {
-        setWork(params: ICommandTimeParams): IBuffer;
-    }
-    interface ICommandDistanceParams extends ICommandSetStandardValue {
-        unit: Unit;
-    }
-    interface IBuffer {
-        setDistance(params: ICommandDistanceParams): IBuffer;
-    }
-    interface IBuffer {
-        setTotalCalories(params: ICommandSetStandardValue): IBuffer;
-    }
-    interface ICommandPowerParams extends ICommandSetStandardValue {
-        unit: Unit;
-    }
-    interface IBuffer {
-        setPower(params: ICommandPowerParams): IBuffer;
+    export class Event<T extends ISubscription> {
+        protected _subscribed: ISubscriptionItem[];
+        protected _subScriptionChangedEvent: ISubscriptionChanged;
+        sub(applyObject: any, event: T): void;
+        unsub(event: T): void;
+        readonly pub: T;
+        readonly pubAsync: T;
+        readonly count: number;
+        registerChangedEvent(func: ISubscriptionChanged): void;
+        protected doChangedEvent(): void;
+        protected findSubscription(event: T): ISubscriptionItem;
+        protected doPub(args: any[]): void;
     }
 }
-/**
- * Created by tijmen on 19-01-16.
- *
- * Extensible frame work so you can add your own csafe commands to the buffer
- *
- */
-declare namespace ergometer.csafe {
-    interface IVersion {
-        ManufacturerId: number;
-        CID: number;
-        Model: number;
-        HardwareVersion: number;
-        FirmwareVersion: number;
+declare module "ergometer/ble/Driver" {
+    /**
+     * Created by tijmen on 01-02-16.
+     */
+    export interface IDevice {
+        address: string;
+        name: string;
+        rssi: number;
+        _internalDevice: any;
     }
-    interface ICommandGetVersion extends ICommandParamsBase {
-        onDataReceived: (version: IVersion) => void;
+    export interface IFoundFunc {
+        (device: IDevice): void;
     }
-    interface IBuffer {
-        getVersion(params: ICommandGetVersion): IBuffer;
-    }
-    interface IDistance {
-        value: number;
-        unit: Unit;
-    }
-    interface ICommandGetDistance extends ICommandParamsBase {
-        onDataReceived: (version: IDistance) => void;
-    }
-    interface IBuffer {
-        getDistance(params: ICommandParamsBase): IBuffer;
+    export interface IDriver {
+        startScan(foundFn?: IFoundFunc): Promise<void>;
+        stopScan(): void;
+        connect(device: IDevice, disconnectFn: () => void): Promise<void>;
+        disconnect(): void;
+        writeCharacteristic(serviceUIID: string, characteristicUUID: string, data: ArrayBufferView): Promise<void>;
+        readCharacteristic(serviceUIID: string, characteristicUUID: string): Promise<ArrayBuffer>;
+        enableNotification(serviceUIID: string, characteristicUUID: string, receive: (data: ArrayBuffer) => void): Promise<void>;
+        disableNotification(serviceUIID: string, characteristicUUID: string): Promise<void>;
     }
 }
-/**
- * Created by tijmen on 06-02-16.
- */
-declare namespace ergometer.csafe {
-    interface ICommandSetWorkOutType extends ICommandParamsBase {
-        value: WorkoutType;
-    }
-    interface IBuffer {
-        setWorkoutType(params: ICommandSetWorkOutType): IBuffer;
-    }
-}
-/**
- * Created by tijmen on 28-12-15.
- */
-declare namespace ergometer {
-    const enum RowingSampleRate {
+declare module "ergometer/typedefinitions" {
+    /**
+     * Created by tijmen on 28-12-15.
+     */
+    import * as pubSub from "ergometer/pubsub";
+    export const enum RowingSampleRate {
         rate1sec = 0,
         rate500ms = 1,
         rate250ms = 2,
         rate100ms = 3,
     }
-    const enum ErgmachineType {
+    export const enum ErgmachineType {
         staticD = 0,
         staticC = 1,
         staticA = 2,
@@ -969,7 +570,7 @@ declare namespace ergometer {
         staticSki = 128,
         num = 129,
     }
-    const enum WorkoutType {
+    export const enum WorkoutType {
         justRowNoSplits = 0,
         justRowSplits = 1,
         fixedDistanceNoAplits = 2,
@@ -983,7 +584,7 @@ declare namespace ergometer {
         fixedCalorie = 10,
         fixedWattMinutes = 11,
     }
-    const enum IntervalType {
+    export const enum IntervalType {
         time = 0,
         dist = 1,
         rest = 2,
@@ -996,7 +597,7 @@ declare namespace ergometer {
         wattMinuteRestUndefined = 9,
         none = 255,
     }
-    const enum WorkoutState {
+    export const enum WorkoutState {
         waitToBegin = 0,
         workoutRow = 1,
         countDownPause = 2,
@@ -1012,30 +613,30 @@ declare namespace ergometer {
         workoutLogged = 12,
         rearm = 13,
     }
-    const enum RowingState {
+    export const enum RowingState {
         inactive = 0,
         active = 1,
     }
-    const enum StrokeState {
+    export const enum StrokeState {
         waitingForWheelToReachMinSpeedState = 0,
         waitingForWheelToAccelerateState = 1,
         drivingState = 2,
         dwellingAfterDriveState = 3,
         recoveryState = 4,
     }
-    const enum WorkoutDurationType {
+    export const enum WorkoutDurationType {
         timeDuration = 0,
         caloriesDuration = 64,
         distanceDuration = 128,
         wattsDuration = 192,
     }
-    const enum SampleRate {
+    export const enum SampleRate {
         rate1sec = 0,
         rate500ms = 1,
         rate250ms = 2,
         rate100ms = 3,
     }
-    const enum Program {
+    export const enum Program {
         Programmed = 0,
         StandardList1 = 1,
         StandardList2 = 2,
@@ -1053,7 +654,7 @@ declare namespace ergometer {
         FavoritesList4 = 14,
         FavoritesList5 = 15,
     }
-    const enum Unit {
+    export const enum Unit {
         distanceMile = 1,
         distanceMile1 = 2,
         distanceMile2 = 3,
@@ -1108,7 +709,7 @@ declare namespace ergometer {
         energyFootlb = 91,
         energyNm = 92,
     }
-    interface RowingGeneralStatus {
+    export interface RowingGeneralStatus {
         elapsedTime: number;
         distance: number;
         workoutType: WorkoutType;
@@ -1121,7 +722,7 @@ declare namespace ergometer {
         workoutDurationType: WorkoutDurationType;
         dragFactor: number;
     }
-    interface RowingAdditionalStatus1 {
+    export interface RowingAdditionalStatus1 {
         elapsedTime: number;
         speed: number;
         strokeRate: number;
@@ -1132,7 +733,7 @@ declare namespace ergometer {
         restTime: number;
         averagePower: number;
     }
-    interface RowingAdditionalStatus2 {
+    export interface RowingAdditionalStatus2 {
         elapsedTime: number;
         intervalCount: number;
         averagePower: number;
@@ -1143,7 +744,7 @@ declare namespace ergometer {
         lastSplitTime: number;
         lastSplitDistance: number;
     }
-    interface RowingStrokeData {
+    export interface RowingStrokeData {
         elapsedTime: number;
         distance: number;
         driveLength: number;
@@ -1155,7 +756,7 @@ declare namespace ergometer {
         workPerStroke: number;
         strokeCount: number;
     }
-    interface RowingAdditionalStrokeData {
+    export interface RowingAdditionalStrokeData {
         elapsedTime: number;
         strokePower: number;
         strokeCalories: number;
@@ -1164,7 +765,7 @@ declare namespace ergometer {
         projectedWorkDistance: number;
         workPerStroke: number;
     }
-    interface RowingSplitIntervalData {
+    export interface RowingSplitIntervalData {
         elapsedTime: number;
         distance: number;
         intervalTime: number;
@@ -1174,7 +775,7 @@ declare namespace ergometer {
         intervalType: IntervalType;
         intervalNumber: number;
     }
-    interface RowingAdditionalSplitIntervalData {
+    export interface RowingAdditionalSplitIntervalData {
         elapsedTime: number;
         intervalAverageStrokeRate: number;
         intervalWorkHeartrate: number;
@@ -1187,7 +788,7 @@ declare namespace ergometer {
         splitAverageDragFactor: number;
         intervalNumber: number;
     }
-    interface WorkoutSummaryData {
+    export interface WorkoutSummaryData {
         logEntryDate: number;
         logEntryTime: number;
         elapsedTime: number;
@@ -1202,7 +803,7 @@ declare namespace ergometer {
         workoutType: WorkoutType;
         averagePace: number;
     }
-    interface AdditionalWorkoutSummaryData {
+    export interface AdditionalWorkoutSummaryData {
         logEntryDate: number;
         logEntryTime: number;
         intervalType: IntervalType;
@@ -1214,7 +815,7 @@ declare namespace ergometer {
         intervalRestTime: number;
         averageCalories: number;
     }
-    interface AdditionalWorkoutSummaryData2 {
+    export interface AdditionalWorkoutSummaryData2 {
         logEntryDate: number;
         logEntryTime: number;
         averagePace: number;
@@ -1222,73 +823,48 @@ declare namespace ergometer {
         gameScore: number;
         ergMachineType: ErgmachineType;
     }
-    interface HeartRateBeltInformation {
+    export interface HeartRateBeltInformation {
         manufacturerId: number;
         deviceType: number;
         beltId: number;
     }
-}
-/**
- * Concept 2 ergometer Performance Monitor api for Cordova
- *
- * This will will work with the PM5
- *
- * Created by tijmen on 01-06-15.
- * License:
- *
- * Copyright 2016 Tijmen van Gulik (tijmen@vangulik.org)
- * Copyright 2016 Tijmen van Gulik (tijmen@vangulik.org)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-declare namespace ergometer {
-    interface RowingGeneralStatusEvent extends pubSub.ISubscription {
+    export interface RowingGeneralStatusEvent extends pubSub.ISubscription {
         (data: RowingGeneralStatus): void;
     }
-    interface RowingAdditionalStatus1Event extends pubSub.ISubscription {
+    export interface RowingAdditionalStatus1Event extends pubSub.ISubscription {
         (data: RowingAdditionalStatus1): void;
     }
-    interface RowingAdditionalStatus2Event extends pubSub.ISubscription {
+    export interface RowingAdditionalStatus2Event extends pubSub.ISubscription {
         (data: RowingAdditionalStatus2): void;
     }
-    interface RowingStrokeDataEvent extends pubSub.ISubscription {
+    export interface RowingStrokeDataEvent extends pubSub.ISubscription {
         (data: RowingStrokeData): void;
     }
-    interface RowingAdditionalStrokeDataEvent extends pubSub.ISubscription {
+    export interface RowingAdditionalStrokeDataEvent extends pubSub.ISubscription {
         (data: RowingAdditionalStrokeData): void;
     }
-    interface RowingSplitIntervalDataEvent extends pubSub.ISubscription {
+    export interface RowingSplitIntervalDataEvent extends pubSub.ISubscription {
         (data: RowingSplitIntervalData): void;
     }
-    interface RowingAdditionalSplitIntervalDataEvent extends pubSub.ISubscription {
+    export interface RowingAdditionalSplitIntervalDataEvent extends pubSub.ISubscription {
         (data: RowingAdditionalSplitIntervalData): void;
     }
-    interface WorkoutSummaryDataEvent extends pubSub.ISubscription {
+    export interface WorkoutSummaryDataEvent extends pubSub.ISubscription {
         (data: WorkoutSummaryData): void;
     }
-    interface AdditionalWorkoutSummaryDataEvent extends pubSub.ISubscription {
+    export interface AdditionalWorkoutSummaryDataEvent extends pubSub.ISubscription {
         (data: AdditionalWorkoutSummaryData): void;
     }
-    interface AdditionalWorkoutSummaryData2Event extends pubSub.ISubscription {
+    export interface AdditionalWorkoutSummaryData2Event extends pubSub.ISubscription {
         (data: AdditionalWorkoutSummaryData2): void;
     }
-    interface HeartRateBeltInformationEvent extends pubSub.ISubscription {
+    export interface HeartRateBeltInformationEvent extends pubSub.ISubscription {
         (data: HeartRateBeltInformation): void;
     }
-    interface PowerCurveEvent extends pubSub.ISubscription {
+    export interface PowerCurveEvent extends pubSub.ISubscription {
         (data: number[]): void;
     }
-    enum MonitorConnectionState {
+    export enum MonitorConnectionState {
         inactive = 0,
         deviceReady = 1,
         scanning = 2,
@@ -1297,22 +873,22 @@ declare namespace ergometer {
         servicesFound = 5,
         readyForCommunication = 6,
     }
-    enum LogLevel {
+    export enum LogLevel {
         error = 0,
         info = 1,
         debug = 2,
         trace = 3,
     }
-    interface LogEvent extends pubSub.ISubscription {
+    export interface LogEvent extends pubSub.ISubscription {
         (text: string, logLevel: LogLevel): void;
     }
-    interface ConnectionStateChangedEvent extends pubSub.ISubscription {
+    export interface ConnectionStateChangedEvent extends pubSub.ISubscription {
         (oldState: MonitorConnectionState, newState: MonitorConnectionState): void;
     }
-    interface ErrorHandler {
+    export interface ErrorHandler {
         (e: any): void;
     }
-    interface DeviceInfo {
+    export interface DeviceInfo {
         connected: boolean;
         name: string;
         address: string;
@@ -1322,11 +898,879 @@ declare namespace ergometer {
         firmwareRevision?: string;
         manufacturer?: string;
     }
-    interface ParsedCSafeCommand {
+    export interface ParsedCSafeCommand {
         command: number;
         detailCommand: number;
         data: Uint8Array;
     }
+    export interface IPerformanceMonitor {
+        [data: string]: any;
+    }
+}
+declare module "ergometer/csafe/command_core" {
+    import * as ergometer from "ergometer/typedefinitions";
+    export interface IVersion {
+        ManufacturerId: number;
+        CID: number;
+        Model: number;
+        HardwareVersion: number;
+        FirmwareVersion: number;
+    }
+    export interface ICommandGetVersion extends ICommandParamsBase {
+        onDataReceived: (version: IVersion) => void;
+    }
+    export interface ICommandParamsBase {
+        onError?: ergometer.ErrorHandler;
+        onDataReceived?: (data: any) => void;
+    }
+    export interface IRawCommand {
+        waitForResponse: boolean;
+        command: number;
+        detailCommand?: number;
+        data?: number[];
+        onDataReceived?: (data: DataView) => void;
+        onError?: ergometer.ErrorHandler;
+        _timestamp?: number;
+    }
+    export interface ICommandStrokeState extends ICommandParamsBase {
+        onDataReceived: (state: ergometer.StrokeState) => void;
+    }
+    export interface ICommandPowerCurve {
+        onDataReceived: (curve: number[]) => void;
+        onError?: ergometer.ErrorHandler;
+    }
+    export interface ICommandProgramParams extends ICommandParamsBase {
+        value: ergometer.Program;
+    }
+    export interface ICommandTimeParams extends ICommandParamsBase {
+        hour: number;
+        minute: number;
+        second: number;
+    }
+    export interface IBuffer {
+        rawCommands: IRawCommand[];
+        clear(): IBuffer;
+        addRawCommand(info: IRawCommand): any;
+        send(success?: () => void, error?: ergometer.ErrorHandler): Promise<void>;
+        getPowerCurve(params: ICommandPowerCurve): IBuffer;
+        setProgram(params: ICommandProgramParams): IBuffer;
+        getStrokeState(params: ICommandStrokeState): IBuffer;
+        setTime(params: ICommandTimeParams): IBuffer;
+        getVersion(params: ICommandGetVersion): IBuffer;
+    }
+    export interface ICommand {
+        (buffer: IBuffer, monitor: ergometer.IPerformanceMonitor): void;
+    }
+    export class CommandManager {
+        private _commands;
+        register(createCommand: ICommand): void;
+        apply(buffer: IBuffer, monitor: ergometer.IPerformanceMonitor): void;
+    }
+    export let commandManager: CommandManager;
+    export interface ICommandSetStandardValue extends ICommandParamsBase {
+        value: number;
+    }
+    export function registerStandardSet<T extends ICommandParamsBase>(functionName: string, command: number, setParams: (params: T) => number[]): void;
+    export function registerStandardSetConfig<T extends ICommandParamsBase>(functionName: string, command: number, setParams: (params: T) => number[]): void;
+    export function registerStandardShortGet<T extends ICommandParamsBase, U>(functionName: string, command: number, converter: (data: DataView) => U): void;
+}
+declare module "ergometer/utils" {
+    export function copyArrayBuffer(src: ArrayBuffer): ArrayBuffer;
+    /**
+     * Interpret byte buffer as unsigned little endian 32 bit integer.
+     * Returns converted number.
+     * @param {ArrayBuffer} data - Input buffer.
+     * @param {number} offset - Start of data.
+     * @return Converted number.
+     * @public
+     */
+    export function getUint24(data: DataView, offset: number): number;
+    export function bufferToString(buf: ArrayBuffer): any;
+    export function valueToNullValue(value: number, nullValue: number): number;
+    export function isDefined(variable: any): boolean;
+    /**
+     * Returns the integer i in hexadecimal string form,
+     * with leading zeroes, such that
+     * the resulting string is at least byteCount*2 characters long.
+     * @param {int} i
+     * @param {int} byteCount
+     * @public
+     */
+    export function toHexString(i: number, byteCount: number): string;
+    /**
+     * Takes a ArrayBuffer or TypedArray and returns its hexadecimal representation.
+     * No spaces or linebreaks.
+     * @param data
+     * @public
+     */
+    export function typedArrayToHexString(data: ArrayBuffer | Uint8Array): string;
+    export function hexStringToTypedArray(hexData: string): Uint8Array;
+    export function getTime(): number;
+}
+declare module "ergometer/csafe/long_commands" {
+    /**
+     * Created by tijmen on 19-01-16.
+     *
+     * Extensible frame work so you can add your own csafe commands to the buffer
+     *
+     */
+    import { IBuffer, ICommandParamsBase, ICommandSetStandardValue } from "ergometer/csafe/command_core";
+    import * as ergometer from "ergometer/typedefinitions";
+    export interface ICommandStrokeState extends ICommandParamsBase {
+        onDataReceived: (state: ergometer.StrokeState) => void;
+    }
+    export interface IBuffer {
+        getStrokeState(params: ICommandStrokeState): IBuffer;
+    }
+    export interface ICommandPowerCurve {
+        onDataReceived: (curve: number[]) => void;
+        onError?: ergometer.ErrorHandler;
+    }
+    export interface IBuffer {
+        getPowerCurve(params: ICommandPowerCurve): IBuffer;
+    }
+    export interface ICommandProgramParams extends ICommandParamsBase {
+        value: ergometer.Program;
+    }
+    export interface IBuffer {
+        setProgram(params: ICommandProgramParams): IBuffer;
+    }
+    export interface ICommandTimeParams extends ICommandParamsBase {
+        hour: number;
+        minute: number;
+        second: number;
+    }
+    export interface IBuffer {
+        setTime(params: ICommandTimeParams): IBuffer;
+    }
+    export interface ICommandDateParams extends ICommandParamsBase {
+        year: number;
+        month: number;
+        day: number;
+    }
+    export interface IBuffer {
+        setDate(params: ICommandDateParams): IBuffer;
+    }
+    export interface IBuffer {
+        setTimeout(params: ICommandSetStandardValue): IBuffer;
+    }
+    export interface IBuffer {
+        setWork(params: ICommandTimeParams): IBuffer;
+    }
+    export interface ICommandDistanceParams extends ICommandSetStandardValue {
+        unit: ergometer.Unit;
+    }
+    export interface IBuffer {
+        setDistance(params: ICommandDistanceParams): IBuffer;
+    }
+    export interface IBuffer {
+        setTotalCalories(params: ICommandSetStandardValue): IBuffer;
+    }
+    export interface ICommandPowerParams extends ICommandSetStandardValue {
+        unit: ergometer.Unit;
+    }
+    export interface IBuffer {
+        setPower(params: ICommandPowerParams): IBuffer;
+    }
+}
+declare module "ergometer/csafe/short_commands" {
+    /**
+     * Created by tijmen on 19-01-16.
+     *
+     * Extensible frame work so you can add your own csafe commands to the buffer
+     *
+     */
+    import { IBuffer, ICommandParamsBase } from "ergometer/csafe/command_core";
+    import * as ergometer from "ergometer/typedefinitions";
+    export interface IDistance {
+        value: number;
+        unit: ergometer.Unit;
+    }
+    export interface ICommandGetDistance extends ICommandParamsBase {
+        onDataReceived: (version: IDistance) => void;
+    }
+    export interface IBuffer {
+        getDistance(params: ICommandParamsBase): IBuffer;
+    }
+}
+declare module "ergometer/csafe/push_config_commands" {
+    /**
+     * Created by tijmen on 06-02-16.
+     */
+    import { ICommandParamsBase } from "ergometer/csafe/command_core";
+    import * as ergometer from "ergometer/typedefinitions";
+    export interface ICommandSetWorkOutType extends ICommandParamsBase {
+        value: ergometer.WorkoutType;
+    }
+    export interface IBuffer {
+        setWorkoutType(params: ICommandSetWorkOutType): IBuffer;
+    }
+}
+declare module "ergometer/functionQueue" {
+    /**
+     * Created by tijmen on 04/07/2017.
+     *
+     * queue function calls which returns a promise, converted to typescript
+     * needed as work around for web blue tooth, this ensures that only one call is processed at at time
+     *
+     *
+     */
+    /**
+     * It limits concurrently executed promises
+     *
+     * @param {Number} [maxPendingPromises=Infinity] max number of concurrently executed promises
+     * @param {Number} [maxQueuedPromises=Infinity]  max number of queued promises
+     * @constructor
+     *
+     * @example
+     *
+     * const queue = new Queue(1);
+     *
+     * queue.add(function () {
+     *     // resolve of this promise will resume next request
+     *     return downloadTarballFromGithub(url, file);
+     * })
+     * .then(function (file) {
+     *     doStuffWith(file);
+     * });
+     *
+     * queue.add(function () {
+     *     return downloadTarballFromGithub(url, file);
+     * })
+     * // This request will be paused
+     * .then(function (file) {
+     *     doStuffWith(file);
+     * });
+     */
+    export interface IPromiseFunction {
+        (...args: any[]): Promise<any | void>;
+    }
+    export class FunctionQueue {
+        private maxPendingPromises;
+        private maxQueuedPromises;
+        private pendingPromises;
+        private queue;
+        constructor(maxPendingPromises?: number, maxQueuedPromises?: number);
+        /**
+         * @param {promiseGenerator}  a function which returns a promise
+         * @param {context} the object which is the context where the function is called in
+         * @param  {params} array of parameters for the function
+         * @return {Promise} promise which is resolved when the function is acually called
+         */
+        add(promiseGenerator: IPromiseFunction, context: any, ...params: any[]): Promise<any | void>;
+        /**
+         * Number of simultaneously running promises (which are resolving)
+         *
+         * @return {number}
+         */
+        getPendingLength(): number;
+        /**
+         * Number of queued promises (which are waiting)
+         *
+         * @return {number}
+         */
+        getQueueLength(): number;
+        /**
+         * @param {*} value
+         * @returns {LocalPromise}
+         */
+        private resolveWith(value);
+        /**
+         * @returns {boolean} true if first item removed from queue
+         * @private
+         */
+        private _dequeue();
+    }
+}
+declare module "ergometer/ble/DriverBleat" {
+    /**
+     * Created by tijmen on 01-02-16.
+     */
+    import { IDevice, IDriver, IFoundFunc } from "ergometer/ble/Driver";
+    import * as ergometer from "ergometer/typedefinitions";
+    export class DriverBleat implements IDriver {
+        performanceMonitor: ergometer.IPerformanceMonitor;
+        private _device;
+        connect(device: IDevice, disconnectFn: () => void): Promise<void>;
+        disconnect(): void;
+        startScan(foundFn?: IFoundFunc): Promise<void>;
+        stopScan(): Promise<void>;
+        writeCharacteristic(serviceUIID: string, characteristicUUID: string, data: ArrayBufferView): Promise<void>;
+        readCharacteristic(serviceUIID: string, characteristicUUID: string): Promise<ArrayBuffer>;
+        enableNotification(serviceUIID: string, characteristicUUID: string, receive: (data: ArrayBuffer) => void): Promise<void>;
+        disableNotification(serviceUIID: string, characteristicUUID: string): Promise<void>;
+        private getCharacteristic(serviceUid, characteristicUid);
+    }
+}
+declare module "ergometer/ble/DriverSimpleBLE" {
+    /**
+     * Created by tijmen on 01-02-16.
+     *
+     * see simpleBLE.d.ts for the definitions of the simpleBLE
+     * It assumes that there simple ble is already imported as a var named simpleBLE
+     *
+     */
+    import { IDevice, IDriver, IFoundFunc } from "ergometer/ble/Driver";
+    import * as ergometer from "ergometer/typedefinitions";
+    export class DriverSimpleBLE implements IDriver {
+        performanceMonitor: ergometer.IPerformanceMonitor;
+        connect(device: IDevice, disconnectFn: () => void): Promise<void>;
+        disconnect(): void;
+        startScan(foundFn?: IFoundFunc): Promise<void>;
+        stopScan(): Promise<void>;
+        writeCharacteristic(serviceUIID: string, characteristicUUID: string, data: ArrayBufferView): Promise<void>;
+        readCharacteristic(serviceUIID: string, characteristicUUID: string): Promise<ArrayBuffer>;
+        enableNotification(serviceUIID: string, characteristicUUID: string, receive: (data: ArrayBuffer) => void): Promise<void>;
+        disableNotification(serviceUIID: string, characteristicUUID: string): Promise<void>;
+    }
+}
+declare module "ergometer/ble/typedefinitions" {
+    /**
+     * Created by tijmen on 16-01-16.
+     */
+    export const PMDEVICE = "ce060000-43e5-11e4-916c-0800200c9a66";
+    export const PMDEVICE_INFO_SERVICE = "ce060010-43e5-11e4-916c-0800200c9a66";
+    export const PMCONTROL_SERVICE = "ce060020-43e5-11e4-916c-0800200c9a66";
+    export const PMROWING_SERVICE = "ce060030-43e5-11e4-916c-0800200c9a66";
+    export const MODELNUMBER_CHARACTERISIC = "ce060011-43e5-11e4-916c-0800200c9a66";
+    export const SERIALNUMBER_CHARACTERISTIC = "ce060012-43e5-11e4-916c-0800200c9a66";
+    export const HWREVISION_CHARACTERISIC = "ce060013-43e5-11e4-916c-0800200c9a66";
+    export const FWREVISION_CHARACTERISIC = "ce060014-43e5-11e4-916c-0800200c9a66";
+    export const MANUFNAME_CHARACTERISIC = "ce060015-43e5-11e4-916c-0800200c9a66";
+    export const MACHINETYPE_CHARACTERISIC = "ce060016-43e5-11e4-916c-0800200c9a66";
+    export const TRANSMIT_TO_PM_CHARACTERISIC = "ce060021-43e5-11e4-916c-0800200c9a66";
+    export const RECEIVE_FROM_PM_CHARACTERISIC = "ce060022-43e5-11e4-916c-0800200c9a66";
+    export const ROWING_STATUS_CHARACTERISIC = "ce060031-43e5-11e4-916c-0800200c9a66";
+    export const EXTRA_STATUS1_CHARACTERISIC = "ce060032-43e5-11e4-916c-0800200c9a66";
+    export const EXTRA_STATUS2_CHARACTERISIC = "ce060033-43e5-11e4-916c-0800200c9a66";
+    export const ROWING_STATUS_SAMPLE_RATE_CHARACTERISIC = "ce060034-43e5-11e4-916c-0800200c9a66";
+    export const STROKE_DATA_CHARACTERISIC = "ce060035-43e5-11e4-916c-0800200c9a66";
+    export const EXTRA_STROKE_DATA_CHARACTERISIC = "ce060036-43e5-11e4-916c-0800200c9a66";
+    export const SPLIT_INTERVAL_DATA_CHARACTERISIC = "ce060037-43e5-11e4-916c-0800200c9a66";
+    export const EXTRA_SPLIT_INTERVAL_DATA_CHARACTERISIC = "ce060038-43e5-11e4-916c-0800200c9a66";
+    export const ROWING_SUMMARY_CHARACTERISIC = "ce060039-43e5-11e4-916c-0800200c9a66";
+    export const EXTRA_ROWING_SUMMARY_CHARACTERISIC = "ce06003a-43e5-11e4-916c-0800200c9a66";
+    export const HEART_RATE_BELT_INFO_CHARACTERISIC = "ce06003b-43e5-11e4-916c-0800200c9a66";
+    export const MULTIPLEXED_INFO_CHARACTERISIC = "ce060080-43e5-11e4-916c-0800200c9a66";
+    export const NOTIFICATION_DESCRIPTOR = "00002902-0000-1000-8000-00805f9b34fb";
+    export const PACKET_SIZE = 20;
+    export const enum PM_Rowing_Status_BLE_Payload {
+        ELAPSED_TIME_LO = 0,
+        ELAPSED_TIME_MID = 1,
+        ELAPSED_TIME_HI = 2,
+        DISTANCE_LO = 3,
+        DISTANCE_MID = 4,
+        DISTANCE_HI = 5,
+        WORKOUT_TYPE = 6,
+        INTERVAL_TYPE = 7,
+        WORKOUT_STATE = 8,
+        ROWING_STATE = 9,
+        STROKE_STATE = 10,
+        TOTAL_WORK_DISTANCE_LO = 11,
+        TOTAL_WORK_DISTANCE_MID = 12,
+        TOTAL_WORK_DISTANCE_HI = 13,
+        WORKOUT_DURATION_LO = 14,
+        WORKOUT_DURATION_MID = 15,
+        WORKOUT_DURATION_HI = 16,
+        WORKOUT_DURATION_TYPE = 17,
+        DRAG_FACTOR = 18,
+        BLE_PAYLOAD_SIZE = 19,
+    }
+    export const enum PM_Extra_Status1_BLE_Payload {
+        ELAPSED_TIME_LO = 0,
+        ELAPSED_TIME_MID = 1,
+        ELAPSED_TIME_HI = 2,
+        SPEED_LO = 3,
+        SPEED_HI = 4,
+        STROKE_RATE = 5,
+        HEARTRATE = 6,
+        CURRENT_PACE_LO = 7,
+        CURRENT_PACE_HI = 8,
+        AVG_PACE_LO = 9,
+        AVG_PACE_HI = 10,
+        REST_DISTANCE_LO = 11,
+        REST_DISTANCE_HI = 12,
+        REST_TIME_LO = 13,
+        REST_TIME_MID = 14,
+        REST_TIME_HI = 15,
+        BLE_PAYLOAD_SIZE = 16,
+    }
+    export const enum PM_Mux_Extra_Status1_BLE_Payload {
+        ELAPSED_TIME_LO = 0,
+        ELAPSED_TIME_MID = 1,
+        ELAPSED_TIME_HI = 2,
+        SPEED_LO = 3,
+        SPEED_HI = 4,
+        STROKE_RATE = 5,
+        HEARTRATE = 6,
+        CURRENT_PACE_LO = 7,
+        CURRENT_PACE_HI = 8,
+        AVG_PACE_LO = 9,
+        AVG_PACE_HI = 10,
+        REST_DISTANCE_LO = 11,
+        REST_DISTANCE_HI = 12,
+        REST_TIME_LO = 13,
+        REST_TIME_MID = 14,
+        REST_TIME_HI = 15,
+        AVG_POWER_LO = 16,
+        AVG_POWER_HI = 17,
+        BLE_PAYLOAD_SIZE = 18,
+    }
+    export const enum PM_Extra_Status2_BLE_Payload {
+        ELAPSED_TIME_LO = 0,
+        ELAPSED_TIME_MID = 1,
+        ELAPSED_TIME_HI = 2,
+        INTERVAL_COUNT = 3,
+        AVG_POWER_LO = 4,
+        AVG_POWER_HI = 5,
+        TOTAL_CALORIES_LO = 6,
+        TOTAL_CALORIES_HI = 7,
+        SPLIT_INTERVAL_AVG_PACE_LO = 8,
+        SPLIT_INTERVAL_AVG_PACE_HI = 9,
+        SPLIT_INTERVAL_AVG_POWER_LO = 10,
+        SPLIT_INTERVAL_AVG_POWER_HI = 11,
+        SPLIT_INTERVAL_AVG_CALORIES_LO = 12,
+        SPLIT_INTERVAL_AVG_CALORIES_HI = 13,
+        LAST_SPLIT_TIME_LO = 14,
+        LAST_SPLIT_TIME_MID = 15,
+        LAST_SPLIT_TIME_HI = 16,
+        LAST_SPLIT_DISTANCE_LO = 17,
+        LAST_SPLIT_DISTANCE_MID = 18,
+        LAST_SPLIT_DISTANCE_HI = 19,
+        BLE_PAYLOAD_SIZE = 20,
+    }
+    export const enum PM_Mux_Extra_Status2_BLE_Payload {
+        ELAPSED_TIME_LO = 0,
+        ELAPSED_TIME_MID = 1,
+        ELAPSED_TIME_HI = 2,
+        INTERVAL_COUNT = 3,
+        TOTAL_CALORIES_LO = 4,
+        TOTAL_CALORIES_HI = 5,
+        SPLIT_INTERVAL_AVG_PACE_LO = 6,
+        SPLIT_INTERVAL_AVG_PACE_HI = 7,
+        SPLIT_INTERVAL_AVG_POWER_LO = 8,
+        SPLIT_INTERVAL_AVG_POWER_HI = 9,
+        SPLIT_INTERVAL_AVG_CALORIES_LO = 10,
+        SPLIT_INTERVAL_AVG_CALORIES_HI = 11,
+        LAST_SPLIT_TIME_LO = 12,
+        LAST_SPLIT_TIME_MID = 13,
+        LAST_SPLIT_TIME_HI = 14,
+        LAST_SPLIT_DISTANCE_LO = 15,
+        LAST_SPLIT_DISTANCE_MID = 16,
+        LAST_SPLIT_DISTANCE_HI = 17,
+        BLE_PAYLOAD_SIZE = 18,
+    }
+    export const enum PM_Stroke_Data_BLE_Payload {
+        ELAPSED_TIME_LO = 0,
+        ELAPSED_TIME_MID = 1,
+        ELAPSED_TIME_HI = 2,
+        DISTANCE_LO = 3,
+        DISTANCE_MID = 4,
+        DISTANCE_HI = 5,
+        DRIVE_LENGTH = 6,
+        DRIVE_TIME = 7,
+        STROKE_RECOVERY_TIME_LO = 8,
+        STROKE_RECOVERY_TIME_HI = 9,
+        STROKE_DISTANCE_LO = 10,
+        STROKE_DISTANCE_HI = 11,
+        PEAK_DRIVE_FORCE_LO = 12,
+        PEAK_DRIVE_FORCE_HI = 13,
+        AVG_DRIVE_FORCE_LO = 14,
+        AVG_DRIVE_FORCE_HI = 15,
+        WORK_PER_STROKE_LO = 16,
+        WORK_PER_STROKE_HI = 17,
+        STROKE_COUNT_LO = 18,
+        STROKE_COUNT_HI = 19,
+        BLE_PAYLOAD_SIZE = 20,
+    }
+    export const enum PM_Mux_Stroke_Data_BLE_Payload {
+        ELAPSED_TIME_LO = 0,
+        ELAPSED_TIME_MID = 1,
+        ELAPSED_TIME_HI = 2,
+        DISTANCE_LO = 3,
+        DISTANCE_MID = 4,
+        DISTANCE_HI = 5,
+        DRIVE_LENGTH = 6,
+        DRIVE_TIME = 7,
+        STROKE_RECOVERY_TIME_LO = 8,
+        STROKE_RECOVERY_TIME_HI = 9,
+        STROKE_DISTANCE_LO = 10,
+        STROKE_DISTANCE_HI = 11,
+        PEAK_DRIVE_FORCE_LO = 12,
+        PEAK_DRIVE_FORCE_HI = 13,
+        AVG_DRIVE_FORCE_LO = 14,
+        AVG_DRIVE_FORCE_HI = 15,
+        STROKE_COUNT_LO = 16,
+        STROKE_COUNT_HI = 17,
+        BLE_PAYLOAD_SIZE = 18,
+    }
+    export const enum PM_Extra_Stroke_Data_BLE_Payload {
+        ELAPSED_TIME_LO = 0,
+        ELAPSED_TIME_MID = 1,
+        ELAPSED_TIME_HI = 2,
+        STROKE_POWER_LO = 3,
+        STROKE_POWER_HI = 4,
+        STROKE_CALORIES_LO = 5,
+        STROKE_CALORIES_HI = 6,
+        STROKE_COUNT_LO = 7,
+        STROKE_COUNT_HI = 8,
+        PROJ_WORK_TIME_LO = 9,
+        PROJ_WORK_TIME_MID = 10,
+        PROJ_WORK_TIME_HI = 11,
+        PROJ_WORK_DIST_LO = 12,
+        PROJ_WORK_DIST_MID = 13,
+        PROJ_WORK_DIST_HI = 14,
+        BLE_PAYLOAD_SIZE = 15,
+    }
+    export const enum PM_Mux_Extra_Stroke_Data_BLE_Payload {
+        ELAPSED_TIME_LO = 0,
+        ELAPSED_TIME_MID = 1,
+        ELAPSED_TIME_HI = 2,
+        STROKE_POWER_LO = 3,
+        STROKE_POWER_HI = 4,
+        STROKE_CALORIES_LO = 5,
+        STROKE_CALORIES_HI = 6,
+        STROKE_COUNT_LO = 7,
+        STROKE_COUNT_HI = 8,
+        PROJ_WORK_TIME_LO = 9,
+        PROJ_WORK_TIME_MID = 10,
+        PROJ_WORK_TIME_HI = 11,
+        PROJ_WORK_DIST_LO = 12,
+        PROJ_WORK_DIST_MID = 13,
+        PROJ_WORK_DIST_HI = 14,
+        WORK_PER_STROKE_LO = 15,
+        WORK_PER_STROKE_HI = 16,
+        BLE_PAYLOAD_SIZE = 17,
+    }
+    export const enum PM_Split_Interval_Data_BLE_Payload {
+        ELAPSED_TIME_LO = 0,
+        ELAPSED_TIME_MID = 1,
+        ELAPSED_TIME_HI = 2,
+        DISTANCE_LO = 3,
+        DISTANCE_MID = 4,
+        DISTANCE_HI = 5,
+        SPLIT_TIME_LO = 6,
+        SPLIT_TIME_MID = 7,
+        SPLIT_TIME_HI = 8,
+        SPLIT_DISTANCE_LO = 9,
+        SPLIT_DISTANCE_MID = 10,
+        SPLIT_DISTANCE_HI = 11,
+        REST_TIME_LO = 12,
+        REST_TIME_HI = 13,
+        REST_DISTANCE_LO = 14,
+        REST_DISTANCE_HI = 15,
+        TYPE = 16,
+        INT_NUMBER = 17,
+        BLE_PAYLOAD_SIZE = 18,
+    }
+    export const enum PM_Extra_Split_Interval_Data_BLE_Payload {
+        ELAPSED_TIME_LO = 0,
+        ELAPSED_TIME_MID = 1,
+        ELAPSED_TIME_HI = 2,
+        STROKE_RATE = 3,
+        WORK_HR = 4,
+        REST_HR = 5,
+        AVG_PACE_LO = 6,
+        AVG_PACE_HI = 7,
+        CALORIES_LO = 8,
+        CALORIES_HI = 9,
+        AVG_CALORIES_LO = 10,
+        AVG_CALORIES_HI = 11,
+        SPEED_LO = 12,
+        SPEED_HI = 13,
+        POWER_LO = 14,
+        POWER_HI = 15,
+        AVG_DRAG_FACTOR = 16,
+        INT_NUMBER = 17,
+        BLE_PAYLOAD_SIZE = 18,
+    }
+    export const enum PM_Workout_Summary_Data_BLE_Payload {
+        LOG_DATE_LO = 0,
+        LOG_DATE_HI = 1,
+        LOG_TIME_LO = 2,
+        LOG_TIME_HI = 3,
+        ELAPSED_TIME_LO = 4,
+        ELAPSED_TIME_MID = 5,
+        ELAPSED_TIME_HI = 6,
+        DISTANCE_LO = 7,
+        DISTANCE_MID = 8,
+        DISTANCE_HI = 9,
+        AVG_SPM = 10,
+        END_HR = 11,
+        AVG_HR = 12,
+        MIN_HR = 13,
+        MAX_HR = 14,
+        AVG_DRAG_FACTOR = 15,
+        RECOVERY_HR = 16,
+        WORKOUT_TYPE = 17,
+        AVG_PACE_LO = 18,
+        AVG_PACE_HI = 19,
+        BLE_PAYLOAD_SIZE = 20,
+    }
+    export const enum PM_Mux_Workout_Summary_Data_BLE_Payload {
+        LOG_DATE_LO = 0,
+        LOG_DATE_HI = 1,
+        LOG_TIME_LO = 2,
+        LOG_TIME_HI = 3,
+        ELAPSED_TIME_LO = 4,
+        ELAPSED_TIME_MID = 5,
+        ELAPSED_TIME_HI = 6,
+        DISTANCE_LO = 7,
+        DISTANCE_MID = 8,
+        DISTANCE_HI = 9,
+        AVG_SPM = 10,
+        END_HR = 11,
+        AVG_HR = 12,
+        MIN_HR = 13,
+        MAX_HR = 14,
+        AVG_DRAG_FACTOR = 15,
+        RECOVERY_HR = 16,
+        WORKOUT_TYPE = 17,
+        BLE_PAYLOAD_SIZE = 18,
+    }
+    export const enum PM_Extra_Workout_Summary_Data_BLE_Payload {
+        LOG_DATE_LO = 0,
+        LOG_DATE_HI = 1,
+        LOG_TIME_LO = 2,
+        LOG_TIME_HI = 3,
+        SPLIT_INT_TYPE = 4,
+        SPLIT_INT_SIZE_LO = 5,
+        SPLIT_INT_SIZE_HI = 6,
+        SPLIT_INT_COUNT = 7,
+        WORK_CALORIES_LO = 8,
+        WORK_CALORIES_HI = 9,
+        WATTS_LO = 10,
+        WATTS_HI = 11,
+        TOTAL_REST_DISTANCE_LO = 12,
+        TOTAL_REST_DISTANCE_MID = 13,
+        TOTAL_REST_DISTANCE_HI = 14,
+        INTERVAL_REST_TIME_LO = 15,
+        INTERVAL_REST_TIME_HI = 16,
+        AVG_CALORIES_LO = 17,
+        AVG_CALORIES_HI = 18,
+        DATA_BLE_PAYLOAD_SIZE = 19,
+    }
+    export const enum PM_Mux_Extra_Workout_Summary_Data_BLE_Payload {
+        LOG_DATE_LO = 0,
+        LOG_DATE_HI = 1,
+        LOG_TIME_LO = 2,
+        LOG_TIME_HI = 3,
+        SPLIT_INT_SIZE_LO = 4,
+        SPLIT_INT_SIZE_HI = 5,
+        SPLIT_INT_COUNT = 6,
+        WORK_CALORIES_LO = 7,
+        WORK_CALORIES_HI = 8,
+        WATTS_LO = 9,
+        WATTS_HI = 10,
+        TOTAL_REST_DISTANCE_LO = 11,
+        TOTAL_REST_DISTANCE_MID = 12,
+        TOTAL_REST_DISTANCE_HI = 13,
+        INTERVAL_REST_TIME_LO = 14,
+        INTERVAL_REST_TIME_HI = 15,
+        AVG_CALORIES_LO = 16,
+        AVG_CALORIES_HI = 17,
+        BLE_PAYLOAD_SIZE = 18,
+    }
+    export const enum PM_Mux_Extra_Workout_Summary2_Data_BLE_Payload {
+        LOG_DATE_LO = 0,
+        LOG_DATE_HI = 1,
+        LOG_TIME_LO = 2,
+        LOG_TIME_HI = 3,
+        AVG_PACE_LO = 4,
+        AVG_PACE_HI = 5,
+        GAME_ID = 6,
+        GAME_SCORE_LO = 7,
+        GAME_SCORE_HI = 8,
+        MACHINE_TYPE = 9,
+        DATA_BLE_PAYLOAD_SIZE = 10,
+    }
+    export const enum PM_Heart_Rate_Belt_Info_BLE_Payload {
+        MANUFACTURER_ID = 0,
+        DEVICE_TYPE = 1,
+        BELT_ID_LO = 2,
+        BELT_ID_MID_LO = 3,
+        BELT_ID_MID_HI = 4,
+        BELT_ID_HI = 5,
+        BLE_PAYLOAD_SIZE = 6,
+    }
+    export const enum PM_Multiplexed_Info_Type_ID {
+        ROWING_GENERAL_STATUS = 49,
+        ROWING_ADDITIONAL_STATUS1 = 50,
+        ROWING_ADDITIONAL_STATUS2 = 51,
+        STROKE_DATA_STATUS = 53,
+        EXTRA_STROKE_DATA_STATUS = 54,
+        SPLIT_INTERVAL_STATUS = 55,
+        EXTRA_SPLIT_INTERVAL_STATUS = 56,
+        WORKOUT_SUMMARY_STATUS = 57,
+        EXTRA_WORKOUT_SUMMARY_STATUS1 = 58,
+        HEART_RATE_BELT_INFO_STATUS = 59,
+        EXTRA_WORKOUT_SUMMARY_STATUS2 = 60,
+    }
+}
+declare module "ergometer/ble/DriverWebBlueTooth" {
+    /**
+     * Created by tijmen on 01-02-16.
+     */
+    import { IDevice, IDriver, IFoundFunc } from "ergometer/ble/Driver";
+    import * as ergometer from "ergometer/typedefinitions";
+    export function hasWebBlueTooth(): boolean;
+    export class DriverWebBlueTooth implements IDriver {
+        private _device;
+        private _server;
+        private _disconnectFn;
+        private _listenerMap;
+        private _listerCharacteristicMap;
+        private _performanceMonitor;
+        constructor(performanceMonitor: ergometer.IPerformanceMonitor);
+        connect(device: IDevice, disconnectFn: () => void): Promise<void>;
+        disconnect(): void;
+        startScan(foundFn?: IFoundFunc): Promise<void>;
+        stopScan(): Promise<void>;
+        writeCharacteristic(serviceUIID: string, characteristicUUID: string, data: ArrayBufferView): Promise<void>;
+        readCharacteristic(serviceUIID: string, characteristicUUID: string): Promise<ArrayBuffer>;
+        enableNotification(serviceUIID: string, characteristicUUID: string, receive: (data: ArrayBuffer) => void): Promise<void>;
+        disableNotification(serviceUIID: string, characteristicUUID: string): Promise<void>;
+        private getCharacteristic(serviceUid, characteristicUid);
+        private onDisconnected(event);
+        private clearConnectionVars();
+        private onCharacteristicValueChanged(event);
+    }
+}
+declare module "ergometer/ble/RecordingDriver" {
+    /**
+     * Created by tijmen on 16-02-16.
+     */
+    import * as driver from "ergometer/ble/Driver";
+    import * as ergometer from "ergometer/typedefinitions";
+    export interface IRecordDevice {
+        address: string;
+        name: string;
+        rssi: number;
+    }
+    export interface IRecordCharacteristic {
+        serviceUIID: string;
+        characteristicUUID: string;
+        data?: string;
+    }
+    export enum RecordingEventType {
+        startScan = 0,
+        scanFoundFn = 1,
+        stopScan = 2,
+        connect = 3,
+        disconnectFn = 4,
+        disconnect = 5,
+        writeCharacteristic = 6,
+        readCharacteristic = 7,
+        enableNotification = 8,
+        notificationReceived = 9,
+        disableNotification = 10,
+    }
+    export interface IRecordingItem {
+        timeStamp: number;
+        eventType: string;
+        timeStampReturn?: number;
+        data?: IRecordCharacteristic | IRecordDevice;
+        error?: any;
+    }
+    export class RecordingDriver implements driver.IDriver {
+        _performanceMonitor: ergometer.IPerformanceMonitor;
+        private _realDriver;
+        private _startTime;
+        private _events;
+        constructor(performanceMonitor: ergometer.IPerformanceMonitor, realDriver: driver.IDriver);
+        addRecording(eventType: RecordingEventType, data?: IRecordCharacteristic | IRecordDevice): IRecordingItem;
+        events: IRecordingItem[];
+        clear(): void;
+        startRecording(): void;
+        startScan(foundFn?: driver.IFoundFunc): Promise<void>;
+        stopScan(): void;
+        connect(device: driver.IDevice, disconnectFn: () => void): Promise<void>;
+        disconnect(): void;
+        writeCharacteristic(serviceUIID: string, characteristicUUID: string, data: ArrayBufferView): Promise<void>;
+        readCharacteristic(serviceUIID: string, characteristicUUID: string): Promise<ArrayBuffer>;
+        enableNotification(serviceUIID: string, characteristicUUID: string, receive: (data: ArrayBuffer) => void): Promise<void>;
+        disableNotification(serviceUIID: string, characteristicUUID: string): Promise<void>;
+        protected getRelativeTime(): number;
+        protected recordResolveFunc(resolve: () => void, rec: IRecordingItem): () => void;
+        protected recordResolveBufferFunc(resolve: (data: ArrayBuffer) => void, rec: IRecordingItem): (data: ArrayBuffer) => void;
+        protected recordErrorFunc(reject: (e) => void, rec: IRecordingItem): (e) => void;
+    }
+}
+declare module "ergometer/ble/ReplayDriver" {
+    /**
+     * Created by tijmen on 18-02-16.
+     */
+    import { IDevice, IDriver, IFoundFunc } from "ergometer/ble/Driver";
+    import { IRecordingItem, RecordingEventType } from "ergometer/ble/RecordingDriver";
+    import * as ergometer from "ergometer/typedefinitions";
+    export interface CallBackEvent extends IRecordingItem {
+        resolve?: (e?: any) => void;
+        reject?: (e: any) => void;
+    }
+    export class ReplayDriver implements IDriver {
+        private _realDriver;
+        private _events;
+        private _eventCallBackMethods;
+        private _eventCallbacks;
+        private _playing;
+        private _eventIndex;
+        private _startTime;
+        private _checkQueueTimerId;
+        private _performanceMonitor;
+        constructor(performanceMonitor: ergometer.IPerformanceMonitor, realDriver: IDriver);
+        readonly events: IRecordingItem[];
+        replay(events: IRecordingItem[]): void;
+        playing: boolean;
+        startScan(foundFn?: IFoundFunc): Promise<void>;
+        stopScan(): void;
+        connect(device: IDevice, disconnectFn: () => void): Promise<void>;
+        disconnect(): void;
+        writeCharacteristic(serviceUIID: string, characteristicUUID: string, data: ArrayBufferView): Promise<void>;
+        readCharacteristic(serviceUIID: string, characteristicUUID: string): Promise<ArrayBuffer>;
+        enableNotification(serviceUIID: string, characteristicUUID: string, receive: (data: ArrayBuffer) => void): Promise<void>;
+        disableNotification(serviceUIID: string, characteristicUUID: string): Promise<void>;
+        protected getRelativeTime(): number;
+        protected isCallBack(eventType: RecordingEventType): boolean;
+        protected isSameEvent(event1: IRecordingItem, event2: IRecordingItem): boolean;
+        protected runEvent(event: IRecordingItem, queuedEvent: CallBackEvent): void;
+        protected runTimedEvent(event: IRecordingItem, queuedEvent: CallBackEvent): void;
+        protected removeEvent(i: number): void;
+        protected checkQueue(): void;
+        protected checkAllEventsProcessd(): boolean;
+        protected timeNextCheck(timeStamp?: number): void;
+        protected addEvent(eventType: RecordingEventType, isMethod: boolean, resolve?: (e?: any) => void, reject?: (e: any) => void, serviceUIID?: string, characteristicUUID?: string): void;
+    }
+}
+declare module "ergometer/performanceMonitor" {
+    /**
+     * Concept 2 ergometer Performance Monitor api for Cordova
+     *
+     * This will will work with the PM5
+     *
+     * Created by tijmen on 01-06-15.
+     * License:
+     *
+     * Copyright 2016 Tijmen van Gulik (tijmen@vangulik.org)
+     * Copyright 2016 Tijmen van Gulik (tijmen@vangulik.org)
+     *
+     * Licensed under the Apache License, Version 2.0 (the "License");
+     * you may not use this file except in compliance with the License.
+     * You may obtain a copy of the License at
+     *
+     * http://www.apache.org/licenses/LICENSE-2.0
+     *
+     * Unless required by applicable law or agreed to in writing, software
+     * distributed under the License is distributed on an "AS IS" BASIS,
+     * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     * See the License for the specific language governing permissions and
+     * limitations under the License.
+     */
+    import * as pubSub from "ergometer/pubsub";
+    import * as driver from "ergometer/ble/Driver";
+    import * as recordingDriver from "ergometer/ble/RecordingDriver";
+    import * as replayDriver from "ergometer/ble/ReplayDriver";
+    import { IBuffer } from "ergometer/csafe/command_core";
+    import * as ergometer from "ergometer/typedefinitions";
     /**
      *
      * Usage:
@@ -1355,7 +1799,7 @@ declare namespace ergometer {
      *    performanceMonitor.stopScan
      *
      */
-    class PerformanceMonitor {
+    export class PerformanceMonitor implements ergometer.IPerformanceMonitor {
         private _driver;
         private _recordingDriver;
         private _replayDriver;
@@ -1401,15 +1845,15 @@ declare namespace ergometer {
          * To work with this class you will need to create it.
          */
         constructor(opts?: {
-            driver?: ble.IDriver;
+            driver?: driver.IDriver;
         });
-        protected readonly recordingDriver: ergometer.ble.RecordingDriver;
+        protected readonly recordingDriver: recordingDriver.RecordingDriver;
         recording: boolean;
-        readonly replayDriver: ble.ReplayDriver;
+        readonly replayDriver: replayDriver.ReplayDriver;
         replaying: boolean;
-        replay(events: ble.IRecordingItem[]): void;
-        recordingEvents: ble.IRecordingItem[];
-        protected readonly driver: ergometer.ble.IDriver;
+        replay(events: recordingDriver.IRecordingItem[]): void;
+        recordingEvents: recordingDriver.IRecordingItem[];
+        protected readonly driver: driver.IDriver;
         /**
          * By default it the logEvent will return errors if you want more debug change the log level
          * @returns {LogLevel}
@@ -1418,7 +1862,7 @@ declare namespace ergometer {
          * By default it the logEvent will return errors if you want more debug change the log level
          * @param value
          */
-        logLevel: LogLevel;
+        logLevel: ergometer.LogLevel;
         /**
          * when the connection is lost re-connect
          * @returns {boolean}
@@ -1453,125 +1897,125 @@ declare namespace ergometer {
         /**
          * The values of the last rowingGeneralStatus event
          *
-         * @returns {RowingGeneralStatus}
+         * @returns {ergometer.RowingGeneralStatus}
          */
-        readonly rowingGeneralStatus: RowingGeneralStatus;
+        readonly rowingGeneralStatus: ergometer.RowingGeneralStatus;
         /**
          * The values of the last rowingAdditionalStatus1 event
-         * @returns {RowingAdditionalStatus1}
+         * @returns {ergometer.RowingAdditionalStatus1}
          */
-        readonly rowingAdditionalStatus1: RowingAdditionalStatus1;
+        readonly rowingAdditionalStatus1: ergometer.RowingAdditionalStatus1;
         /**
          * The values of the last RowingAdditionalStatus2 event
-         * @returns {RowingAdditionalStatus2}
+         * @returns {ergometer.RowingAdditionalStatus2}
          */
-        readonly rowingAdditionalStatus2: RowingAdditionalStatus2;
+        readonly rowingAdditionalStatus2: ergometer.RowingAdditionalStatus2;
         /**
          *  The values of the last rowingStrokeData event
-         * @returns {RowingStrokeData}
+         * @returns {ergometer.RowingStrokeData}
          */
-        readonly rowingStrokeData: RowingStrokeData;
+        readonly rowingStrokeData: ergometer.RowingStrokeData;
         /**
          * The values of the last rowingAdditionalStrokeData event
-         * @returns {RowingAdditionalStrokeData}
+         * @returns {ergometer.RowingAdditionalStrokeData}
          */
-        readonly rowingAdditionalStrokeData: RowingAdditionalStrokeData;
+        readonly rowingAdditionalStrokeData: ergometer.RowingAdditionalStrokeData;
         /**
          * The values of the last rowingSplitIntervalData event
-         * @returns {RowingSplitIntervalData}
+         * @returns {ergometer.RowingSplitIntervalData}
          */
-        readonly rowingSplitIntervalData: RowingSplitIntervalData;
+        readonly rowingSplitIntervalData: ergometer.RowingSplitIntervalData;
         /**
          * The values of the last rowingAdditionalSplitIntervalData event
-         * @returns {RowingAdditionalSplitIntervalData}
+         * @returns {ergometer.RowingAdditionalSplitIntervalData}
          */
-        readonly rowingAdditionalSplitIntervalData: RowingAdditionalSplitIntervalData;
+        readonly rowingAdditionalSplitIntervalData: ergometer.RowingAdditionalSplitIntervalData;
         /**
          * The values of the last workoutSummaryData event
-         * @returns {WorkoutSummaryData}
+         * @returns {ergometer.WorkoutSummaryData}
          */
-        readonly workoutSummaryData: WorkoutSummaryData;
+        readonly workoutSummaryData: ergometer.WorkoutSummaryData;
         /**
          * The values of the last additionalWorkoutSummaryData event
-         * @returns {AdditionalWorkoutSummaryData}
+         * @returns {ergometer.AdditionalWorkoutSummaryData}
          */
-        readonly additionalWorkoutSummaryData: AdditionalWorkoutSummaryData;
+        readonly additionalWorkoutSummaryData: ergometer.AdditionalWorkoutSummaryData;
         /**
          * The values of the last AdditionalWorkoutSummaryData2 event
-         * @returns {AdditionalWorkoutSummaryData2}
+         * @returns {ergometer.AdditionalWorkoutSummaryData2}
          */
-        readonly additionalWorkoutSummaryData2: AdditionalWorkoutSummaryData2;
+        readonly additionalWorkoutSummaryData2: ergometer.AdditionalWorkoutSummaryData2;
         /**
          * The values of the last heartRateBeltInformation event
-         * @returns {HeartRateBeltInformation}
+         * @returns {ergometer.HeartRateBeltInformation}
          */
-        readonly heartRateBeltInformation: HeartRateBeltInformation;
+        readonly heartRateBeltInformation: ergometer.HeartRateBeltInformation;
         /**
          * read rowingGeneralStatus data
          * connect to the using .sub(this,myFunction)
-         * @returns {pubSub.Event<RowingGeneralStatusEvent>}
+         * @returns {pubSub.Event<ergometer.RowingGeneralStatusEvent>}
          */
-        readonly rowingGeneralStatusEvent: pubSub.Event<RowingGeneralStatusEvent>;
+        readonly rowingGeneralStatusEvent: pubSub.Event<ergometer.RowingGeneralStatusEvent>;
         /**
          * read rowingGeneralStatus1 data
          * connect to the using .sub(this,myFunction)
-         * @returns {pubSub.Event<RowingAdditionalStatus1Event>}
+         * @returns {pubSub.Event<ergometer.RowingAdditionalStatus1Event>}
          */
-        readonly rowingAdditionalStatus1Event: pubSub.Event<RowingAdditionalStatus1Event>;
+        readonly rowingAdditionalStatus1Event: pubSub.Event<ergometer.RowingAdditionalStatus1Event>;
         /**
          * read rowingAdditionalStatus2 data
          * connect to the using .sub(this,myFunction)
-         * @returns {pubSub.Event<RowingAdditionalStatus2Event>}
+         * @returns {pubSub.Event<ergometer.RowingAdditionalStatus2Event>}
          */
-        readonly rowingAdditionalStatus2Event: pubSub.Event<RowingAdditionalStatus2Event>;
+        readonly rowingAdditionalStatus2Event: pubSub.Event<ergometer.RowingAdditionalStatus2Event>;
         /**
          * read rowingStrokeData data
          * connect to the using .sub(this,myFunction)
-         * @returns {pubSub.Event<RowingStrokeDataEvent>}
+         * @returns {pubSub.Event<ergometer.RowingStrokeDataEvent>}
          */
-        readonly rowingStrokeDataEvent: pubSub.Event<RowingStrokeDataEvent>;
+        readonly rowingStrokeDataEvent: pubSub.Event<ergometer.RowingStrokeDataEvent>;
         /**
          * read rowingAdditionalStrokeData data
          * connect to the using .sub(this,myFunction)
-         * @returns {pubSub.Event<RowingAdditionalStrokeDataEvent>}
+         * @returns {pubSub.Event<ergometer.RowingAdditionalStrokeDataEvent>}
          */
-        readonly rowingAdditionalStrokeDataEvent: pubSub.Event<RowingAdditionalStrokeDataEvent>;
+        readonly rowingAdditionalStrokeDataEvent: pubSub.Event<ergometer.RowingAdditionalStrokeDataEvent>;
         /**
          * read rowingSplitIntervalDat data
          * connect to the using .sub(this,myFunction)
-         * @returns {pubSub.Event<RowingSplitIntervalDataEvent>}
+         * @returns {pubSub.Event<ergometer.RowingSplitIntervalDataEvent>}
          */
-        readonly rowingSplitIntervalDataEvent: pubSub.Event<RowingSplitIntervalDataEvent>;
+        readonly rowingSplitIntervalDataEvent: pubSub.Event<ergometer.RowingSplitIntervalDataEvent>;
         /**
          * read rowingAdditionalSplitIntervalData data
          * connect to the using .sub(this,myFunction)
-         * @returns {pubSub.Event<RowingAdditionalSplitIntervalDataEvent>}
+         * @returns {pubSub.Event<ergometer.RowingAdditionalSplitIntervalDataEvent>}
          */
-        readonly rowingAdditionalSplitIntervalDataEvent: pubSub.Event<RowingAdditionalSplitIntervalDataEvent>;
+        readonly rowingAdditionalSplitIntervalDataEvent: pubSub.Event<ergometer.RowingAdditionalSplitIntervalDataEvent>;
         /**
          * read workoutSummaryData data
          * connect to the using .sub(this,myFunction)
-         * @returns {pubSub.Event<WorkoutSummaryDataEvent>}
+         * @returns {pubSub.Event<ergometer.WorkoutSummaryDataEvent>}
          */
-        readonly workoutSummaryDataEvent: pubSub.Event<WorkoutSummaryDataEvent>;
+        readonly workoutSummaryDataEvent: pubSub.Event<ergometer.WorkoutSummaryDataEvent>;
         /**
          * read additionalWorkoutSummaryData data
          * connect to the using .sub(this,myFunction)
-         * @returns {pubSub.Event<AdditionalWorkoutSummaryDataEvent>}
+         * @returns {pubSub.Event<ergometer.AdditionalWorkoutSummaryDataEvent>}
          */
-        readonly additionalWorkoutSummaryDataEvent: pubSub.Event<AdditionalWorkoutSummaryDataEvent>;
+        readonly additionalWorkoutSummaryDataEvent: pubSub.Event<ergometer.AdditionalWorkoutSummaryDataEvent>;
         /**
          * read additionalWorkoutSummaryData2 data
          * connect to the using .sub(this,myFunction)
-         * @returns {pubSub.Event<AdditionalWorkoutSummaryData2Event>}
+         * @returns {pubSub.Event<ergometer.AdditionalWorkoutSummaryData2Event>}
          */
-        readonly additionalWorkoutSummaryData2Event: pubSub.Event<AdditionalWorkoutSummaryData2Event>;
+        readonly additionalWorkoutSummaryData2Event: pubSub.Event<ergometer.AdditionalWorkoutSummaryData2Event>;
         /**
          * read heartRateBeltInformation data
          * connect to the using .sub(this,myFunction)
-         * @returns {pubSub.Event<HeartRateBeltInformationEvent>}
+         * @returns {pubSub.Event<ergometer.HeartRateBeltInformationEvent>}
          */
-        readonly heartRateBeltInformationEvent: pubSub.Event<HeartRateBeltInformationEvent>;
+        readonly heartRateBeltInformationEvent: pubSub.Event<ergometer.HeartRateBeltInformationEvent>;
         readonly powerCurveEvent: pubSub.Event<ergometer.PowerCurveEvent>;
         /**
          * event which is called when the connection state is changed. For example this way you
@@ -1579,12 +2023,12 @@ declare namespace ergometer {
          * connect to the using .sub(this,myFunction)
          * @returns {pubSub.Event<ConnectionStateChangedEvent>}
          */
-        readonly connectionStateChangedEvent: pubSub.Event<ConnectionStateChangedEvent>;
+        readonly connectionStateChangedEvent: pubSub.Event<ergometer.ConnectionStateChangedEvent>;
         /**
          * returns error and other log information. Some errors can only be received using the logEvent
          * @returns {pubSub.Event<LogEvent>}
          */
-        readonly logEvent: pubSub.Event<LogEvent>;
+        readonly logEvent: pubSub.Event<ergometer.LogEvent>;
         readonly powerCurve: number[];
         /**
          * Get device information of the connected device.
@@ -1599,16 +2043,16 @@ declare namespace ergometer {
          * Change the performance monitor sample rate.
          * @param value
          */
-        sampleRate: SampleRate;
+        sampleRate: ergometer.SampleRate;
         /**
          * disconnect the current connected device
          */
         disconnect(): void;
         /**
          * read the current connection state
-         * @returns {MonitorConnectionState}
+         * @returns {ergometer.MonitorConnectionState}
          */
-        readonly connectionState: MonitorConnectionState;
+        readonly connectionState: ergometer.MonitorConnectionState;
         /**
          * Print debug info to console and application UI.
          * @param info
@@ -1628,13 +2072,13 @@ declare namespace ergometer {
          * call the global error hander and call the optional error handler if given
          * @param error
          */
-        handleError(error: string, errorFn?: ErrorHandler): void;
+        handleError(error: string, errorFn?: ergometer.ErrorHandler): void;
         /**
          * Get an error function which adds the errorDescription to the error ,cals the global and an optional local funcion
          * @param errorDescription
          * @param errorFn
          */
-        getErrorHandlerFunc(errorDescription: string, errorFn?: ErrorHandler): ErrorHandler;
+        getErrorHandlerFunc(errorDescription: string, errorFn?: ergometer.ErrorHandler): ergometer.ErrorHandler;
         /**
          *
          */
@@ -1643,7 +2087,7 @@ declare namespace ergometer {
          * Scan for device use the deviceFound to connect .
          * @param deviceFound
          */
-        startScan(deviceFound: (device: DeviceInfo) => boolean, errorFn?: ErrorHandler): Promise<void>;
+        startScan(deviceFound: (device: ergometer.DeviceInfo) => boolean, errorFn?: ergometer.ErrorHandler): Promise<void>;
         /**
          * connect to a specific device. This should be a PM5 device which is found by the startScan. You can
          * only call this function after startScan is called. Connection to a device will stop the scan.
@@ -1661,24 +2105,24 @@ declare namespace ergometer {
          * @returns {Promise<void>|Promise} use promis instead of success and error function
          */
         sendCSafeBuffer(): Promise<void>;
-        receivedCSaveCommand(parsed: ParsedCSafeCommand): void;
+        receivedCSaveCommand(parsed: ergometer.ParsedCSafeCommand): void;
         handleCSafeNotifications(): void;
-        readonly csafeBuffer: ergometer.csafe.IBuffer;
+        readonly csafeBuffer: IBuffer;
         /**
          *
          * @param device
          */
-        protected removeDevice(device: DeviceInfo): void;
+        protected removeDevice(device: ergometer.DeviceInfo): void;
         /**
          *
          * @param device
          */
-        protected addDevice(device: DeviceInfo): void;
+        protected addDevice(device: ergometer.DeviceInfo): void;
         /**
          *
          * @param value
          */
-        protected changeConnectionState(value: MonitorConnectionState): void;
+        protected changeConnectionState(value: ergometer.MonitorConnectionState): void;
         /**
          *
          */
@@ -1695,13 +2139,13 @@ declare namespace ergometer {
         /**
          *
          */
-        protected initialize(driver: ble.IDriver): void;
+        protected initialize(driver: driver.IDriver): void;
         /**
          *
          * @param name
          * @returns {DeviceInfo}
          */
-        protected findDevice(name: string): DeviceInfo;
+        protected findDevice(name: string): ergometer.DeviceInfo;
         /**
          * the promise is never fail
          * @param serviceUUID
@@ -1789,4 +2233,24 @@ declare namespace ergometer {
         protected removeOldSendCommands(): void;
         protected sendCsafeCommands(byteArray: number[]): Promise<void>;
     }
+}
+declare module "index" {
+    import * as long_commands from "ergometer/csafe/long_commands";
+    import * as short_commands from "ergometer/csafe/short_commands";
+    import * as push_config_commands from "ergometer/csafe/push_config_commands";
+    export * from "ergometer/utils";
+    export * from "ergometer/functionQueue";
+    export * from "ergometer/pubsub";
+    export * from "ergometer/ble/Driver";
+    export * from "ergometer/ble/DriverBleat";
+    export * from "ergometer/ble/DriverSimpleBLE";
+    export * from "ergometer/ble/DriverWebBlueTooth";
+    export * from "ergometer/ble/RecordingDriver";
+    export * from "ergometer/ble/ReplayDriver";
+    export * from "ergometer/ble/typedefinitions";
+    export * from "ergometer/csafe/typedefinitions";
+    export * from "ergometer/csafe/command_core";
+    export * from "ergometer/typedefinitions";
+    export * from "ergometer/performanceMonitor";
+    export { long_commands, short_commands, push_config_commands };
 }

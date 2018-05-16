@@ -139,7 +139,7 @@ var Demo = /** @class */ (function () {
                     _this.showData("Version hardware " + version.HardwareVersion + " software:" + version.FirmwareVersion);
                 }
             })
-                .setProgram({ value: 1 /* StandardList1 */ })
+                .setProgram({ value: ergometer.Program.StandardList1 })
                 .send()
                 .then(function () {
                 console.log("send done, you can send th next");

@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "moduleResolution": "node",
+    "target": "es5",
+    "module": "es2015",
+    "lib": ["es5", "es2015", "es2016", "dom"],
+    "sourceMap": true,
+    "declaration": true,
+    "allowSyntheticDefaultImports": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "outDir": "lib",
+    "typeRoots": ["node_modules/@types"]
+  },
+  "files": [
+    "api/typescript/index.ts",
+    "api/typescript/typings/bleat.classic.d.ts",
+    "api/typescript/typings/simpleBLE.d.ts",
+    "api/typescript/typings/webbluetooth.d.ts"
+  ]
+}

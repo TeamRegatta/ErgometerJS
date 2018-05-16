@@ -7,6 +7,7 @@
     "node": ">=5.5.0"
   },
   "devDependencies": {
+    "@types/node": "^10.1.0",
     "copyfiles": ">=0.2.1",
     "local-web-server": "^2.5.2",
     "prettier": "^1.12.1",
@@ -15,7 +16,7 @@
     "tslint-config-prettier": "^1.12.0",
     "tslint-config-standard": "^7.0.0",
     "typedoc": "^0.11.1",
-    "typescript": "2.7.2"
+    "typescript": "^2.8.3"
   },
   "license": "Apache-2.0",
   "keywords": [
@@ -29,7 +30,7 @@
   ],
   "scripts": {
     "start": "npm run docs && node_modules/.bin/serve ./docs -o",
-    "build:api": "node_modules/.bin/tsc -p api",
+    "build:api": "node_modules/.bin/tsc",
     "build:copy_api_copytowebapp":
       "node_modules/.bin/copyfiles -f api/lib/ergometer.js ../WebErgometer/WebApp/html/script/lib",
     "build:copy_api_copytowebapp_ts":
