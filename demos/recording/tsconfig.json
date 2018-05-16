@@ -4,16 +4,10 @@
     "target": "es5",
     "sourceMap": true,
     "outFile": "app.js",
-    "lib": [
-      "ES5",
-      "ES2015",
-      "DOM"]
+    "lib": ["es5", "es2015", "dom"]
   },
-  "exclude": [
-    "node_modules"
-  ],
-  "filesGlob": [
-  ],
+  "exclude": ["node_modules"],
+  "filesGlob": [],
   "files": [
     "../../api/typescript/typings/bleat.classic.d.ts",
     "../../api/typescript/typings/webbluetooth.d.ts",
@@ -33,7 +27,7 @@
     "../../api/typescript/ergometer/csafe/short_commands.ts",
     "../../api/typescript/ergometer/csafe/push_config_commands.ts",
     "../../api/typescript/ergometer/typedefinitions.ts",
-    "../../api/typescript/ergometer/performancemonitor.ts",
+    "../../api/typescript/ergometer/performanceMonitor.ts",
     "../../api/typescript/ergometer/functionQueue.ts",
     "typescript/typings/jquery.d.ts",
     "typescript/recordings/row100meter.ts",

@@ -14,23 +14,6 @@
     "typescript/index.ts",
     "typescript/typings/bleat.classic.d.ts",
     "typescript/typings/simpleBLE.d.ts",
-    "typescript/typings/webbluetooth.d.ts",
-    "typescript/ergometer/utils.ts",
-    "typescript/ergometer/functionQueue.ts",
-    "typescript/ergometer/pubsub.ts",
-    "typescript/ergometer/ble/Driver.ts",
-    "typescript/ergometer/ble/DriverBleat.ts",
-    "typescript/ergometer/ble/DriverSimpleBLE.ts",
-    "typescript/ergometer/ble/DriverWebBlueTooth.ts",
-    "typescript/ergometer/ble/RecordingDriver.ts",
-    "typescript/ergometer/ble/ReplayDriver.ts",
-    "typescript/ergometer/ble/typedefinitions.ts",
-    "typescript/ergometer/csafe/typedefinitions.ts",
-    "typescript/ergometer/csafe/command_core.ts",
-    "typescript/ergometer/csafe/long_commands.ts",
-    "typescript/ergometer/csafe/short_commands.ts",
-    "typescript/ergometer/csafe/push_config_commands.ts",
-    "typescript/ergometer/typedefinitions.ts",
-    "typescript/ergometer/performancemonitor.ts"
+    "typescript/typings/webbluetooth.d.ts"
   ]
 }
