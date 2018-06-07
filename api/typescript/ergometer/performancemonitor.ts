@@ -659,7 +659,7 @@ export class PerformanceMonitor implements ergometer.IPerformanceMonitor {
             quality: 2 * (device.rssi + 100)
           }
           this.addDevice(deviceInfo)
-          if (deviceFound(deviceInfo)) {
+          if (deviceFound && deviceFound(deviceInfo)) {
             this.connectToDevice(deviceInfo.name)
           }
         }
